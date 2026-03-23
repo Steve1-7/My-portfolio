@@ -309,7 +309,7 @@ function PageLoader({ onDone }:{ onDone:()=>void }) {
                 <span style={{color:'#00FF00',textShadow:'0 0 40px #00FF00,0 0 80px #00FF0040'}}>STE</span>
                 <span style={{color:'#C77DFF',textShadow:'0 0 40px #C77DFF,0 0 80px #C77DFF40'}}>VE</span>
               </div>
-              <div style={{fontFamily:'JetBrains Mono,monospace',fontSize:11,letterSpacing:'0.35em',color:'rgba(255,255,255,0.25)',marginTop:8,textTransform:'uppercase'}}>Creative Digital Studio</div>
+              <div style={{fontFamily:'JetBrains Mono,monospace',fontSize:11,letterSpacing:'0.35em',color:'rgba(255,255,255,0.25)',marginTop:8,textTransform:'uppercase'}}>Full Stack Developer</div>
             </motion.div>
             <div style={{background:'rgba(0,255,0,0.02)',border:'1px solid rgba(0,255,0,0.1)',borderRadius:2,padding:'1.5rem',marginBottom:'1.5rem',minHeight:220}}>
               <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:'1rem',paddingBottom:'0.75rem',borderBottom:'1px solid rgba(0,255,0,0.08)'}}>
