@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback, createContext, useContext } from 'react'
 import { motion, useInView, AnimatePresence, useMotionValue, useTransform, useSpring, useScroll, useSpring as useSpringFn } from 'framer-motion'
+import { ChatBot } from './components/ChatBot'
 
 // ── THEME ──────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -420,72 +421,7 @@ function CommandPalette() {
 
 // ── AI CHATBOT ─────────────────────────────────────────────────────────────────
 function AIChatBot() {
-  const [open, setOpen] = useState(false)
-  const [msgs, setMsgs] = useState([{role:'assistant',content:"Hey 👋 I'm Steve's AI. Ask me about his work, skills, or how to hire him."}])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [dots, setDots] = useState('')
-  const endRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const { t } = useTheme()
-  useEffect(()=>{ endRef.current?.scrollIntoView({behavior:'smooth'}) },[msgs,loading])
-  useEffect(()=>{ if(loading){const i=setInterval(()=>setDots(d=>d.length>=3?'':d+'.'),400);return ()=>clearInterval(i)} },[loading])
-  useEffect(()=>{ if(open) setTimeout(()=>inputRef.current?.focus(),300) },[open])
-  const send=async()=>{
-    if(!input.trim()||loading)return
-    const userMsg={role:'user',content:input.trim()}
-    setMsgs(p=>[...p,userMsg]); setInput(''); setLoading(true)
-    try {
-      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:`You are Steve Ronald's AI assistant. Steve is a full-stack developer, brand designer, and 3D artist from South Africa. Skills: React, Next.js, TypeScript, Node.js, Figma, Blender. Contact: stevezuluu@gmail.com. Available for freelance. Keep answers under 100 words, confident and professional.`,messages:[...msgs,userMsg].map(m=>({role:m.role,content:m.content}))})})
-      const data=await res.json()
-      setMsgs(p=>[...p,{role:'assistant',content:data.content?.[0]?.text||'Something went wrong.'}])
-    } catch { setMsgs(p=>[...p,{role:'assistant',content:'Connection error. Try again.'}]) }
-    finally { setLoading(false) }
-  }
-  const quick=['What do you do?','View live projects','How to hire Steve?','Tech stack?']
-  return (
-    <>
-      <motion.button onClick={()=>setOpen(v=>!v)} data-hover="true" whileHover={{scale:1.08}} whileTap={{scale:.95}}
-        style={{position:'fixed',bottom:32,left:32,zIndex:1000,width:52,height:52,borderRadius:2,display:'flex',alignItems:'center',justifyContent:'center',background:open?`rgba(199,125,255,0.12)`:'rgba(5,5,5,0.92)',border:`1px solid ${open?`rgba(199,125,255,0.35)`:`${t.a}18`}`,backdropFilter:'blur(20px)'}}>
-        <AnimatePresence mode="wait">
-          {open?<motion.span key="x" initial={{rotate:-90,opacity:0}} animate={{rotate:0,opacity:1}} exit={{rotate:90,opacity:0}} style={{color:'#C77DFF',fontSize:20}}>×</motion.span>
-           :<motion.span key="b" initial={{scale:.8,opacity:0}} animate={{scale:1,opacity:1}} exit={{scale:.8,opacity:0}} style={{fontSize:22}}>🤖</motion.span>}
-        </AnimatePresence>
-      </motion.button>
-      <AnimatePresence>
-        {open&&(
-          <motion.div initial={{opacity:0,scale:.9,y:20}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:.9,y:20}} transition={{duration:.3}}
-            style={{position:'fixed',bottom:96,left:32,zIndex:1000,width:300,height:460,borderRadius:2,overflow:'hidden',display:'flex',flexDirection:'column',background:'#060606',border:`1px solid rgba(199,125,255,0.12)`,boxShadow:`0 0 60px rgba(199,125,255,0.07)`}}>
-            <div style={{height:1,background:`linear-gradient(90deg,${t.a},${t.b})`}} />
-            <div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
-              <div style={{position:'relative'}}>
-                <div style={{width:32,height:32,borderRadius:2,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(199,125,255,0.1)',border:'1px solid rgba(199,125,255,0.2)',fontSize:16}}>🤖</div>
-                <span style={{position:'absolute',bottom:-2,right:-2,width:10,height:10,borderRadius:'50%',background:t.a,border:'2px solid #060606',boxShadow:`0 0 6px ${t.a}`}} />
-              </div>
-              <div>
-                <div style={{fontFamily:'Syne,sans-serif',fontWeight:600,fontSize:12,color:'#fff'}}>Steve&apos;s AI</div>
-                <div style={{fontFamily:'JetBrains Mono,monospace',fontSize:10,color:`${t.a}70`}}>● Online · Instant replies</div>
-              </div>
-            </div>
-            <div style={{flex:1,overflowY:'auto',padding:'12px 14px',display:'flex',flexDirection:'column',gap:10}}>
-              {msgs.map((m,i)=>(
-                <motion.div key={i} initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start'}}>
-                  <div style={{maxWidth:'88%',padding:'8px 12px',borderRadius:2,fontSize:12,lineHeight:1.6,fontFamily:'DM Sans,sans-serif',background:m.role==='user'?`${t.a}12`:'rgba(255,255,255,0.04)',border:`1px solid ${m.role==='user'?t.a+'20':'rgba(255,255,255,0.05)'}`,color:m.role==='user'?'rgba(220,255,220,0.9)':'rgba(255,255,255,0.55)'}}>{m.content}</div>
-                </motion.div>
-              ))}
-              {loading&&<div style={{display:'flex'}}><div style={{padding:'8px 12px',borderRadius:2,fontSize:11,fontFamily:'JetBrains Mono,monospace',color:'#444',background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.05)'}}>thinking{dots}</div></div>}
-              <div ref={endRef} />
-            </div>
-            {msgs.length<=1&&<div style={{padding:'0 12px 10px',display:'flex',flexWrap:'wrap',gap:6}}>{quick.map(q2=><button key={q2} onClick={()=>setInput(q2)} data-hover="true" style={{fontSize:10,padding:'4px 8px',borderRadius:2,fontFamily:'JetBrains Mono,monospace',cursor:'pointer',background:'rgba(199,125,255,0.05)',border:'1px solid rgba(199,125,255,0.15)',color:'rgba(199,125,255,0.7)'}}>{q2}</button>)}</div>}
-            <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderTop:'1px solid rgba(255,255,255,0.04)'}}>
-              <input ref={inputRef} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask about Steve's work..." style={{flex:1,background:'transparent',border:'none',outline:'none',fontFamily:'JetBrains Mono,monospace',fontSize:11,color:'#fff'}} />
-              <button onClick={send} disabled={loading||!input.trim()} data-hover="true" style={{width:28,height:28,borderRadius:2,display:'flex',alignItems:'center',justifyContent:'center',background:input.trim()?`${t.a}18`:'rgba(255,255,255,0.03)',border:`1px solid ${t.a}${input.trim()?'35':'10'}`,color:t.a,fontSize:14,cursor:'pointer',opacity:loading||!input.trim()?.4:1}}>↑</button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  )
+  return <ChatBot />
 }
 
 // ── CONTEXT MENU ───────────────────────────────────────────────────────────────
@@ -1322,16 +1258,10 @@ function Testimonials() {
 
 // ── WHATSAPP FLOAT ─────────────────────────────────────────────────────────────
 function WhatsAppFloat() {
-  const {t}=useTheme()
   const toast=useToast()
-  const [vis,setVis]=useState(false)
-  useEffect(()=>{
-    const fn=()=>setVis(window.scrollY>400)
-    window.addEventListener('scroll',fn,{passive:true}); return ()=>window.removeEventListener('scroll',fn)
-  },[])
   return (
     <AnimatePresence>
-      {vis&&(
+      {
         <motion.a initial={{opacity:0,scale:.7}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:.7}}
           href="https://wa.me/27676283210?text=Hi%20Steve%2C%20I%20saw%20your%20portfolio%20and%20would%20love%20to%20discuss%20a%20project!"
           target="_blank" rel="noopener noreferrer" data-hover="true"
@@ -1339,7 +1269,7 @@ function WhatsAppFloat() {
           style={{position:'fixed',bottom:100,left:24,zIndex:500,width:46,height:46,borderRadius:2,display:'flex',alignItems:'center',justifyContent:'center',background:'#25D366',border:'none',boxShadow:'0 4px 20px rgba(37,211,102,0.35)',cursor:'pointer',textDecoration:'none',fontSize:20}}>
           💬
         </motion.a>
-      )}
+      }
     </AnimatePresence>
   )
 }
