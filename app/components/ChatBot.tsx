@@ -150,8 +150,17 @@ export function ChatBot() {
         },
         body: JSON.stringify({ messages: apiMessages })
       })
+      const contentType = response.headers.get('content-type') || ''
 
-      const data = await response.json()
+      let data: any = null
+      if (contentType.includes('application/json')) {
+        data = await response.json()
+      } else {
+        const raw = await response.text()
+        throw new Error(
+          `Server returned a non-JSON response (${response.status}). ${raw.slice(0, 200)}`
+        )
+      }
 
       if (!response.ok) {
         throw new Error(data?.error || 'Connection error. Try again.')

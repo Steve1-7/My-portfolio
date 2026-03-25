@@ -167,3 +167,15 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Helpful for deployment debugging: if this route isn't deployed,
+// Vercel will return an HTML 404 page instead of JSON.
+export async function GET() {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Use POST /api/chat with a JSON body: { messages: [...] }",
+    },
+    { status: 405 }
+  );
+}
