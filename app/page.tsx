@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback, createContext, useContext } from 'react'
 import { motion, useInView, AnimatePresence, useMotionValue, useTransform, useSpring, useScroll, useSpring as useSpringFn } from 'framer-motion'
-import { ChatBot } from './components/ChatBot'
+import { OpenAIChatBot } from './components/OpenAIChatBot'
 
 // ── THEME ──────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -421,7 +421,7 @@ function CommandPalette() {
 
 // ── AI CHATBOT ─────────────────────────────────────────────────────────────────
 function AIChatBot() {
-  return <ChatBot />
+  return <OpenAIChatBot />
 }
 
 // ── CONTEXT MENU ───────────────────────────────────────────────────────────────

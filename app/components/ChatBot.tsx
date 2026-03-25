@@ -48,7 +48,15 @@ function detectNavigationIntent(text: string): NavigationIntent | null {
   return null
 }
 
-export function ChatBot() {
+interface ChatBotProps {
+  apiEndpoint?: string
+  assistantName?: string
+}
+
+export function ChatBot({
+  apiEndpoint = '/api/chat',
+  assistantName = "Steve's AI Assistant",
+}: ChatBotProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -143,7 +151,7 @@ export function ChatBot() {
         content: text.trim()
       })
 
-      const response = await fetch('/api/chat', {
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -264,7 +272,7 @@ export function ChatBot() {
             <div className="p-4 border-b border-green-500/20 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <h3 className="text-sm font-mono text-white">Steve's AI Assistant</h3>
+                <h3 className="text-sm font-mono text-white">{assistantName}</h3>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
