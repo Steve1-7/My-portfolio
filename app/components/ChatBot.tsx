@@ -158,7 +158,7 @@ export function ChatBot() {
       } else {
         const raw = await response.text()
         throw new Error(
-          `Server returned a non-JSON response (${response.status}). ${raw.slice(0, 200)}`
+          `Server returned a non-JSON response (${response.status}, ${contentType}). ${raw.slice(0, 180)}`
         )
       }
 

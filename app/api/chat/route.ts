@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Avoid any Edge/runtime differences on Vercel.
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 // Hugging Face Router API Configuration (OpenAI-compatible chat completions)
 const HF_API_URL = "https://router.huggingface.co/v1/chat/completions";
 const HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.2";
@@ -59,7 +63,15 @@ function buildFallbackReply(userMessage: string): string {
 export async function POST(request: NextRequest) {
   try {
     // Parse request body
-    const body = await request.json();
+    let body: any = null;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return NextResponse.json(
+        { success: false, error: "Invalid JSON body" },
+        { status: 400 }
+      );
+    }
     const { messages } = body as { messages: Message[] };
 
     // Validate input
