@@ -48,13 +48,31 @@ function detectNavigationIntent(text: string): NavigationIntent | null {
   return null
 }
 
+function buildClientFallbackReply(userMessage: string): string {
+  const message = userMessage.toLowerCase()
+
+  if (message.includes('hire') || message.includes('work') || message.includes('project')) {
+    return 'Steve is available for freelance and contract work. You can reach him at stevezuluu@gmail.com with your scope, timeline, and budget.'
+  }
+
+  if (message.includes('stack') || message.includes('tech') || message.includes('technolog')) {
+    return 'Steve works across React, Next.js, TypeScript, Node.js, Figma, and Blender, with a focus on premium UX and modern delivery.'
+  }
+
+  if (message.includes('where') || message.includes('location') || message.includes('based')) {
+    return 'Steve is based in South Africa and works remotely with global clients on web, brand, and 3D experiences.'
+  }
+
+  return 'I can help with Steve’s services, tech stack, and availability. If you tell me which section you want (projects, about, skills, contact), I can take you there.'
+}
+
 interface ChatBotProps {
   apiEndpoint?: string
   assistantName?: string
 }
 
 export function ChatBot({
-  apiEndpoint = '/api/chat',
+  apiEndpoint = '/api/chat-openai',
   assistantName = "Steve's AI Assistant",
 }: ChatBotProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -166,7 +184,7 @@ export function ChatBot({
       } else {
         const raw = await response.text()
         throw new Error(
-          `Server returned a non-JSON response (${response.status}, ${contentType}). ${raw.slice(0, 180)}`
+          `Server returned a non-JSON response (${response.status}, ${contentType}) from ${apiEndpoint}. ${raw.slice(0, 180)}`
         )
       }
 
@@ -195,7 +213,12 @@ export function ChatBot({
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
         role: 'assistant',
-        content: error instanceof Error ? error.message : 'Connection error. Try again.'
+        content:
+          error instanceof Error && error.message.startsWith('Server returned a non-JSON response')
+            ? buildClientFallbackReply(text.trim())
+            : error instanceof Error
+              ? error.message
+              : 'Connection error. Try again.'
       }
       setMessages(prev => [...prev, errorMessage])
     } finally {
