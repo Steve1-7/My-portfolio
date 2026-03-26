@@ -774,7 +774,7 @@ function About() {
   ]
   const fe=[{n:'React / Next.js',l:92,c:'#38BDF8'},{n:'TypeScript',l:83,c:'#60A5FA'},{n:'Tailwind CSS',l:94,c:'#2DD4BF'},{n:'Framer Motion',l:85,c:t.b},{n:'Figma / UI Design',l:79,c:'#F472B6'},{n:'HTML / CSS',l:96,c:'#FB923C'}]
   const be=[{n:'Node.js / Express',l:86,c:t.a},{n:'PostgreSQL',l:76,c:'#60A5FA'},{n:'MongoDB',l:79,c:'#4ADE80'},{n:'Python',l:71,c:'#FBBF24'},{n:'Docker',l:67,c:'#38BDF8'},{n:'REST APIs',l:91,c:t.b}]
-  const aStats=[{v:5,s:'+',l:'Years',c:t.a},{v:80,s:'+',l:'Projects',c:t.b},{v:30,s:'+',l:'Clients',c:'#F9CA24'}]
+  const aStats=[{v:5,s:'+',l:'Years',c:t.a},{v:50,s:'+',l:'Projects',c:t.b},{v:20,s:'+',l:'Clients',c:'#F9CA24'}]
   return (
     <section id="about" style={{position:'relative',padding:'8rem 0',overflow:'hidden',background:'#060606'}}>
       <div style={{position:'absolute',top:0,right:0,width:500,height:500,borderRadius:'50%',pointerEvents:'none',background:`radial-gradient(circle,${t.b}03,transparent 70%)`,filter:'blur(80px)'}} />
