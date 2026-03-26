@@ -129,7 +129,7 @@ function KeyboardShortcuts() {
   const rows = [
     {keys:['⌘','K'],desc:'Command palette'},
     {keys:['?'],desc:'Keyboard shortcuts'},
-    {keys:['↑↑↓↓←→BA'],desc:'Easter egg 🎮'},
+    {keys:['E'],desc:'Easter egg 🎮'},
     {keys:['ESC'],desc:'Close any overlay'},
     {keys:['←','→'],desc:'Gallery lightbox nav'},
     {keys:['G'],desc:'Jump to GitHub'},
@@ -658,7 +658,7 @@ function Hero() {
     const h=(e:KeyboardEvent)=>{ setKonami(prev=>{ const n=[...prev,e.key].slice(-CODE.length); if(n.join()===CODE.join()){setEgg(true);toast('KONAMI CODE UNLOCKED! 🎮','🎮');setTimeout(()=>setEgg(false),4000)} return n }) }
     window.addEventListener('keydown',h); return ()=>window.removeEventListener('keydown',h)
   },[])
-  const stats=[{v:5,s:'+',l:'Years'},{v:30,s:'+',l:'Clients'},{v:80,s:'+',l:'Projects'},{v:100,s:'%',l:'Satisfaction'}]
+  const stats=[{v:5,s:'+',l:'Years'},{v:20,s:'+',l:'Clients'},{v:50,s:'+',l:'Projects'},{v:100,s:'%',l:'Satisfaction'}]
   const roles=['Full-Stack Developer','Brand Designer','3D Artist','AI Builder','Creative Technologist']
   return (
     <section id="hero" style={{position:'relative',minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',background:t.bg}}>
@@ -961,7 +961,7 @@ function Projects() {
     {id:4,title:'Kings Barber',cat:'E-Commerce',desc:'Sleek barbershop brand site with booking system and service showcase.',url:'http://stevemediaco.unaux.com',color:'#FFB347',year:'2024',tags:['Branding','Booking','Web'],stats:[{l:'Bookings',v:200,s:'+'},{l:'Services',v:15,s:''},{l:'Rating',v:4.9,s:'★'}]},
     {id:5,title:'Steve Media Co.',cat:'Agency',desc:'Full-service digital agency landing with portfolio integration.',url:'https://stevemediaco.zya.me',color:'#FF6B6B',year:'2024',tags:['Agency','Media','Creative'],stats:[{l:'Clients',v:30,s:'+'},{l:'Projects',v:80,s:'+'},{l:'Score',v:100,s:'%'}]},
     {id:6,title:'C4 DesignHub',cat:'Platform',desc:'Collaborative design hub for creatives — tools, assets, and community.',url:'http://c4desighub.gt.tc/',color:'#F9CA24',year:'2023',tags:['Design','Community','Platform'],stats:[{l:'Assets',v:500,s:'+'},{l:'Members',v:1200,s:'+'},{l:'Tools',v:24,s:''}]},
-    {id:7,title:'Portfolio Classic',cat:'Portfolio',desc:'Original developer portfolio showcasing case studies and creative work.',url:'http://steveportfolio.ct.ws',color:'#A8FF78',year:'2023',tags:['HTML','CSS','JavaScript'],stats:[{l:'Projects',v:20,s:'+'},{l:'Skills',v:15,s:'+'},{l:'Views',v:5,s:'K+'}]},
+    {id:7,title:'Omnincreva-studios',cat:'Website',desc:'Modern high-converting website for Omnicreva, featuring immersive UI, smooth animations, and a premium digital experience.',url:'https://omni-creva.vercel.app/',color:'#A8FF78',year:'2026',tags:['Next.js','Framer','Supabase'],stats:[{l:'Projects',v:20,s:'+'},{l:'Clients',v:30,s:'+'},{l:'Views',v:20,s:'K+'}]},
     {
   id: 8,
   title: 'Omnicreva Interface',
@@ -1140,10 +1140,11 @@ function Services() {
 function CurrentlyBuilding() {
   const { t } = useTheme()
   const [vis, setVis] = useState(false)
+  const [popup, setPopup] = useState(false)
   useEffect(()=>{const id=setTimeout(()=>setVis(true),3200);return()=>clearTimeout(id)},[])
   const projects=[
     {name:'AI Portfolio Builder',desc:'Let anyone generate a portfolio by answering 10 questions',stack:['Next.js','OpenAI','Prisma'],pct:68,color:t.a},
-    {name:'OmniCreava Studio',desc:'Premium agency site with client portal + project tracker',stack:['Next.js','Supabase','Framer'],pct:42,color:t.b},
+    {name:'OmniCreava Studio',desc:'Premium agency site with client portal + project tracker',stack:['Next.js','Supabase','Framer'],pct:85,color:t.b},
   ]
   return (
     <AnimatePresence>
@@ -1162,7 +1163,7 @@ function CurrentlyBuilding() {
               </div>
               <div style={{display:'flex',flexDirection:'column',gap:10}}>
                 {projects.map((p,i)=>(
-                  <div key={i} style={{padding:'10px 12px',borderRadius:2,background:`${p.color}06`,border:`1px solid ${p.color}15`}}>
+                  <div key={p.name} style={{padding:'10px 12px',borderRadius:2,background:`${p.color}06`,border:`1px solid ${p.color}15`}}>
                     <div style={{fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:12,color:'#fff',marginBottom:3}}>{p.name}</div>
                     <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(255,255,255,0.3)',lineHeight:1.4,marginBottom:8}}>{p.desc}</div>
                     <div style={{height:2,borderRadius:2,background:'rgba(255,255,255,0.06)',marginBottom:6,overflow:'hidden'}}>
@@ -1171,9 +1172,40 @@ function CurrentlyBuilding() {
                     </div>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                       <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-                        {p.stack.map(s=><span key={s} style={{fontFamily:'JetBrains Mono,monospace',fontSize:9,padding:'1px 5px',borderRadius:2,background:`${p.color}10`,color:`${p.color}80`}}>{s}</span>)}
+                        {p.stack.map((s, idx) => (
+  <span key={s + idx} style={{fontFamily:'JetBrains Mono,monospace',fontSize:9,padding:'1px 5px',borderRadius:2,background:`${p.color}10`,color:`${p.color}80`}}>
+    {s}
+  </span>
+))}
                       </div>
-                      <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:10,color:p.color,fontWeight:700}}>{p.pct}%</span>
+                      <div style={{display:'flex',alignItems:'center',gap:6}}>
+  <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:10,color:p.color,fontWeight:700}}>
+    {p.pct}%
+  </span>
+
+  <button
+    onClick={()=>{
+      if(p.name === 'OmniCreava Studio'){
+        window.open('https://omni-creva.vercel.app/','_blank')
+      } else {
+        setPopup(true)
+        setTimeout(()=>setPopup(false),2000)
+      }
+    }}
+    style={{
+      fontSize:9,
+      padding:'2px 6px',
+      borderRadius:2,
+      border:`1px solid ${p.color}40`,
+      background:`${p.color}10`,
+      color:p.color,
+      cursor:'pointer',
+      fontFamily:'JetBrains Mono, monospace'
+    }}
+  >
+    View
+  </button>
+</div>
                     </div>
                   </div>
                 ))}
@@ -1182,6 +1214,37 @@ function CurrentlyBuilding() {
           </div>
         </motion.div>
       )}
+
+      {popup && (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.8 }}
+    transition={{ duration: 0.3 }}
+    style={{
+      position: 'fixed',
+      bottom: 240,
+      right: 40,
+      background: 'rgba(0,0,0,0.9)',
+      border: `1px solid ${t.a}30`,
+      padding: '10px 14px',
+      borderRadius: 4,
+      fontSize: 11,
+      color: '#fff',
+      fontFamily: 'JetBrains Mono, monospace',
+      boxShadow: `0 0 20px ${t.a}30`,
+      zIndex: 999
+    }}
+  >
+    <motion.span
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ repeat: Infinity, duration: 1.2, repeatType: "reverse" }}
+    >
+      Link Coming Soon...
+    </motion.span>
+  </motion.div>
+)}
     </AnimatePresence>
   )
 }
