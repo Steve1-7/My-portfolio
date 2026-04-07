@@ -964,6 +964,21 @@ function Projects() {
     {id:7,title:'Omnincreva-studios',cat:'Website',desc:'Modern high-converting website for Omnicreva, featuring immersive UI, smooth animations, and a premium digital experience.',url:'https://omni-creva.vercel.app/',color:'#A8FF78',year:'2026',tags:['Next.js','Framer','Supabase'],stats:[{l:'Projects',v:20,s:'+'},{l:'Clients',v:30,s:'+'},{l:'Views',v:20,s:'K+'}]},
     {
   id: 8,
+  title: 'TalentDash',
+  cat: 'Web Application',
+  desc: 'A professional career tracking dashboard designed to streamline talent management with real-time updates and automated backend integration.',
+  url: 'https://talentdash-seven.vercel.app',
+  color: '#4F46E5', // Professional Indigo/Blue to match a dashboard feel
+  year: '2026',
+  tags: ['Next.js', 'Supabase', 'GitHub Actions', 'Edge Functions'],
+  stats: [
+    { l: 'Gigs Tracked', v: 100, s: '+' },
+    { l: 'Deployments', v: 50, s: '+' },
+    { l: 'Uptime', v: 99, s: '%' }
+  ]
+},
+    {
+  id: 9,
   title: 'Omnicreva Interface',
   cat: 'Landing Page',
   desc: 'Modern high-converting landing page for Omnicreva, featuring immersive UI, smooth animations, and a premium digital experience.',
@@ -1142,10 +1157,29 @@ function CurrentlyBuilding() {
   const [vis, setVis] = useState(false)
   const [popup, setPopup] = useState(false)
   useEffect(()=>{const id=setTimeout(()=>setVis(true),3200);return()=>clearTimeout(id)},[])
-  const projects=[
-    {name:'AI Portfolio Builder',desc:'Let anyone generate a portfolio by answering 10 questions',stack:['Next.js','OpenAI','Prisma'],pct:68,color:t.a},
-    {name:'OmniCreava Studio',desc:'Premium agency site with client portal + project tracker',stack:['Next.js','Supabase','Framer'],pct:85,color:t.b},
-  ]
+  const projects = [
+  {
+    name: 'TalentDash',
+    desc: 'Career tracking dashboard with real-time analytics and automated Supabase deployments',
+    stack: ['Next.js', 'Supabase', 'GitHub Actions'],
+    pct: 95,
+    color: '#4F46E5' // Professional Indigo for a dashboard feel
+  },
+  {
+    name: 'AI Portfolio Builder',
+    desc: 'Let anyone generate a portfolio by answering 10 questions',
+    stack: ['Next.js', 'OpenAI', 'Prisma'],
+    pct: 68,
+    color: t.a
+  },
+  {
+    name: 'OmniCreava Studio',
+    desc: 'Premium agency site with client portal + project tracker',
+    stack: ['Next.js', 'Supabase', 'Framer'],
+    pct: 85,
+    color: t.b
+  }
+];
   return (
     <AnimatePresence>
       {vis&&(
@@ -1183,28 +1217,30 @@ function CurrentlyBuilding() {
     {p.pct}%
   </span>
 
-  <button
-    onClick={()=>{
-      if(p.name === 'OmniCreava Studio'){
-        window.open('https://omni-creva.vercel.app/','_blank')
-      } else {
-        setPopup(true)
-        setTimeout(()=>setPopup(false),2000)
-      }
-    }}
-    style={{
-      fontSize:9,
-      padding:'2px 6px',
-      borderRadius:2,
-      border:`1px solid ${p.color}40`,
-      background:`${p.color}10`,
-      color:p.color,
-      cursor:'pointer',
-      fontFamily:'JetBrains Mono, monospace'
-    }}
-  >
-    View
-  </button>
+ <button
+  onClick={() => {
+    if (p.name === 'OmniCreava Studio') {
+      window.open('https://omni-creva.vercel.app/', '_blank');
+    } else if (p.name === 'TalentDash') {
+      window.open('https://talentdash-seven.vercel.app', '_blank');
+    } else {
+      setPopup(true);
+      setTimeout(() => setPopup(false), 2000);
+    }
+  }}
+  style={{
+    fontSize: 9,
+    padding: '2px 6px',
+    borderRadius: 2,
+    border: `1px solid ${p.color}40`,
+    background: `${p.color}10`,
+    color: p.color,
+    cursor: 'pointer',
+    fontFamily: 'JetBrains Mono, monospace',
+  }}
+>
+  View
+</button>
 </div>
                     </div>
                   </div>
