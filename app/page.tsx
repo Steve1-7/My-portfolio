@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback, createContext, useContext, Suspense } from 'react'
 import { motion, useInView, AnimatePresence, useMotionValue, useTransform, useSpring, useScroll, useSpring as useSpringFn } from 'framer-motion'
-import FloatingChat from './components/FloatingChat'
 
 // ── THEME ──────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -1745,7 +1744,6 @@ export default function Page() {
               <ContextMenu />
               <KeyboardShortcuts />
               <CurrentlyBuilding />
-              <FloatingChat />
               <WhatsAppFloat />
               <DeepLinks />
             </>
