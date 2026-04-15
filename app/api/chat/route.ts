@@ -89,7 +89,12 @@ export async function POST(request: NextRequest) {
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: "Invalid request: messages array required" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" }
+        headers: { 
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type"
+        }
       });
     }
 
@@ -101,13 +106,35 @@ export async function POST(request: NextRequest) {
     const assistantMessage = getResponse(userContent);
 
     return new Response(JSON.stringify({ message: assistantMessage }), {
-      headers: { "Content-Type": "application/json" }
+      headers: { 
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      }
     });
   } catch (error) {
     console.error("Chat API error:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" }
+      headers: { 
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      }
     });
   }
+}
+
+// Handle OPTIONS request for CORS
+export async function OPTIONS(request: NextRequest) {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+    }
+  });
 }
