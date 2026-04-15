@@ -1,13 +1,18 @@
 'use client'
-import { useState, useEffect, useRef, useCallback, createContext, useContext } from 'react'
+import { useState, useEffect, useRef, useCallback, createContext, useContext, Suspense } from 'react'
 import { motion, useInView, AnimatePresence, useMotionValue, useTransform, useSpring, useScroll, useSpring as useSpringFn } from 'framer-motion'
-import { OpenAIChatBot } from './components/OpenAIChatBot'
+import dynamic from 'next/dynamic'
+
+const OpenAIChatBot = dynamic(() => import('./components/OpenAIChatBot').then(mod => ({ default: mod.OpenAIChatBot })), {
+  loading: () => <div style={{ position: 'fixed', bottom: 24, right: 24, width: 56, height: 56, borderRadius: '50%', background: 'rgba(0, 255, 0, 0.1)', border: '1px solid rgba(0, 255, 0, 0.3)' }} />,
+  ssr: false
+})
 
 // ── THEME ──────────────────────────────────────────────────────────────────────
 const THEMES = {
-  neon: { name:'Neon', a:'#00FF00', b:'#C77DFF', bg:'#050505', card:'#0A0A0A' },
-  gold: { name:'Gold', a:'#F9CA24', b:'#FF6B6B', bg:'#050402', card:'#0C0A04' },
-  ice:  { name:'Ice',  a:'#38BDF8', b:'#ffffff', bg:'#030508', card:'#07090F' },
+  neon: { name:'Neon', a:'#00FF00', b:'#C77DFF', bg:'#050505', card:'#0A0A0A', text:'#ffffff' },
+  gold: { name:'Gold', a:'#F9CA24', b:'#FF6B6B', bg:'#050402', card:'#0C0A04', text:'#ffffff' },
+  ice:  { name:'Ice',  a:'#38BDF8', b:'#ffffff', bg:'#030508', card:'#07090F', text:'#ffffff' },
 }
 type ThemeKey = keyof typeof THEMES
 const ThemeCtx = createContext<{theme:ThemeKey;t:typeof THEMES.neon;setTheme:(k:ThemeKey)=>void}>({theme:'neon',t:THEMES.neon,setTheme:()=>{}})
@@ -658,7 +663,7 @@ function Hero() {
     const h=(e:KeyboardEvent)=>{ setKonami(prev=>{ const n=[...prev,e.key].slice(-CODE.length); if(n.join()===CODE.join()){setEgg(true);toast('KONAMI CODE UNLOCKED! 🎮','🎮');setTimeout(()=>setEgg(false),4000)} return n }) }
     window.addEventListener('keydown',h); return ()=>window.removeEventListener('keydown',h)
   },[])
-  const stats=[{v:5,s:'+',l:'Years'},{v:20,s:'+',l:'Clients'},{v:50,s:'+',l:'Projects'},{v:100,s:'%',l:'Satisfaction'}]
+  const stats=[{v:3,s:'+',l:'Years'},{v:9,s:'+',l:'Clients'},{v:20,s:'+',l:'Projects'},{v:100,s:'%',l:'Satisfaction'}]
   const roles=['Full-Stack Developer','Brand Designer','3D Artist','AI Builder','Creative Technologist']
   return (
     <section id="hero" style={{position:'relative',minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',background:t.bg}}>
@@ -732,17 +737,6 @@ function Hero() {
               style={{padding:'clamp(12px,2vw,16px) clamp(16px,3vw,20px)',borderRadius:2,fontFamily:'JetBrains Mono,monospace',fontSize:'clamp(11px,2vw,13px)',letterSpacing:'0.08em',background:'transparent',color:'rgba(255,255,255,0.3)',border:'1px solid rgba(255,255,255,0.1)',cursor:'pointer',transition:'all .3s'}} title="Share this portfolio">
               ⬡ Share
             </button>
-          </motion.div>
-          <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:1.05}}
-            style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(clamp(80px,20vw,100px),1fr))',gap:'clamp(16px,4vw,32px)'}}>
-            {stats.map((s,i)=>(
-              <div key={i} style={{textAlign:'center'}}>
-                <div style={{fontFamily:'Syne,sans-serif',fontWeight:900,fontSize:'clamp(20px,5vw,32px)',color:i%2===0?t.a:t.b,textShadow:`0 0 20px ${i%2===0?t.a:t.b}50`}}>
-                  <CountUp end={s.v} suffix={s.s} duration={2200} />
-                </div>
-                <div style={{fontFamily:'JetBrains Mono,monospace',fontSize:'clamp(8px,1.5vw,10px)',color:'rgba(255,255,255,0.22)',marginTop:4,letterSpacing:'0.1em'}}>{s.l}</div>
-              </div>
-            ))}
           </motion.div>
           <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1.4}}
             style={{position:'absolute',bottom:32,left:'50%',transform:'translateX(-50%)',display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
@@ -955,22 +949,19 @@ function Projects() {
     window.addEventListener('resize',resize); return ()=>window.removeEventListener('resize',resize)
   },[])
   const allProjects=[
-    {id:1,title:'Steve Portfolio',cat:'Portfolio',desc:'Personal brand showcase with immersive UI, live demos, and premium animations.',url:'https://steve-portfolio-flame.vercel.app/',color:t.a,year:'2025',tags:['React','Vercel','Brand'],stats:[{l:'Load',v:.8,s:'s'},{l:'Lighthouse',v:98,s:'/100'},{l:'Deploys',v:40,s:'+'}]},
-    {id:2,title:'Saseka Holdings',cat:'Corporate',desc:'Premium corporate identity platform for an emerging investment firm.',url:'https://tory-cyan-2kxwuiasql.edgeone.app',color:t.b,year:'2024',tags:['Next.js','Finance','EdgeOne'],stats:[{l:'Uptime',v:99.9,s:'%'},{l:'Pages',v:8,s:''},{l:'CDN',v:200,s:'+'}]},
-    {id:3,title:"Patient's Dashboard",cat:'Dashboard',desc:'Clinical dashboard for patient data, appointments, and health metrics.',url:'https://patient-dashboard.tiiny.site/',color:'#38BDF8',year:'2024',tags:['Dashboard','HealthTech','UI'],stats:[{l:'Modules',v:12,s:''},{l:'Charts',v:8,s:''},{l:'Patients',v:500,s:'+'}]},
-    {id:4,title:'Kings Barber',cat:'E-Commerce',desc:'Sleek barbershop brand site with booking system and service showcase.',url:'http://stevemediaco.unaux.com',color:'#FFB347',year:'2024',tags:['Branding','Booking','Web'],stats:[{l:'Bookings',v:200,s:'+'},{l:'Services',v:15,s:''},{l:'Rating',v:4.9,s:'★'}]},
-    {id:5,title:'Steve Media Co.',cat:'Agency',desc:'Full-service digital agency landing with portfolio integration.',url:'https://stevemediaco.zya.me',color:'#FF6B6B',year:'2024',tags:['Agency','Media','Creative'],stats:[{l:'Clients',v:30,s:'+'},{l:'Projects',v:80,s:'+'},{l:'Score',v:100,s:'%'}]},
-    {id:6,title:'C4 DesignHub',cat:'Platform',desc:'Collaborative design hub for creatives — tools, assets, and community.',url:'http://c4desighub.gt.tc/',color:'#F9CA24',year:'2023',tags:['Design','Community','Platform'],stats:[{l:'Assets',v:500,s:'+'},{l:'Members',v:1200,s:'+'},{l:'Tools',v:24,s:''}]},
-    {id:7,title:'Omnincreva-studios',cat:'Website',desc:'Modern high-converting website for Omnicreva, featuring immersive UI, smooth animations, and a premium digital experience.',url:'https://omni-creva.vercel.app/',color:'#A8FF78',year:'2026',tags:['Next.js','Framer','Supabase'],stats:[{l:'Projects',v:20,s:'+'},{l:'Clients',v:30,s:'+'},{l:'Views',v:20,s:'K+'}]},
+    {id:1,title:'Steve Portfolio',cat:'Portfolio',desc:'Personal brand showcase with immersive UI, live demos, and premium animations.',
+      url:'https://my-portfolio-six-virid-22.vercel.app/',color:t.a,year:'2025',tags:['React','Vercel','Brand'],stats:[{l:'Load',v:.8,s:'s'},
+        {l:'Lighthouse',v:98,s:'/100'},{l:'Deploys',v:40,s:'+'}]},
+    {id:2,title:'DripGather',cat:'E-Commerce',desc:'A next-generation AI-driven e-commerce platform with intelligent product recommendations and modern UI/UX. Implemented conversational search, dynamic product filtering, secure authentication, and optimised performance through code-splitting and caching strategies — achieving sub-2s load times and a 35% improvement in simulated conversion flow completion rates.', url:'https://drip-gather.vercel.app/',color:t.b,year:'2026',tags:['React', 'TypeScript', 'Vite', 'Tailwind CSS', 'Radix UI', 'React Query', 'Context API', 'Zod', 'GitHub Actions'],stats:[{l:'Uptime',v:99.9,s:'%'} ,{l:'Viewers',v:250,s:'+'},{l:'Customer',v:30,s:'+'}]},
+    {id:3,title:'Omnincreva-studios',cat:'Website',desc:'Modern high-converting website for Omnicreva, featuring immersive UI, smooth animations, and a premium digital experience.',url:'https://omni-creva.vercel.app/',color:'#A8FF78',year:'2026',tags:['React', 'TypeScript', 'Tailwind CSS', 'Radix UI','Framer'],stats:[{l:'Projects',v:20,s:'+'},{l:'Clients',v:10,s:'+'},{l:'Views',v:1000,s:'K+'}]},
     {
-  id: 8,
-  title: 'TalentDash',
+  id: 5,
+  title: 'PromptlyOS',
   cat: 'Web Application',
-  desc: 'A professional career tracking dashboard designed to streamline talent management with real-time updates and automated backend integration.',
-  url: 'https://talentdash-seven.vercel.app',
+  desc: 'A professional AI-powered career management platform featuring role-based dashboards for developers, freelancers, recruiters, and managers. Delivered real-time project, task, skill, and application tracking with full CRUD functionality. Integrated AI features including learning roadmap generation, code analysis, and smart recommendations — reducing manual career admin time by an estimated 60% for early users.',url: 'https://promptlyos-seven.vercel.app',
   color: '#4F46E5', // Professional Indigo/Blue to match a dashboard feel
   year: '2026',
-  tags: ['Next.js', 'Supabase', 'GitHub Actions', 'Edge Functions'],
+  tags: ['Next.js','Tailwind CSS', 'Vite', 'OpenAI API', 'Supabase', 'GitHub Actions', 'Edge Functions'],
   stats: [
     { l: 'Gigs Tracked', v: 100, s: '+' },
     { l: 'Deployments', v: 50, s: '+' },
@@ -978,7 +969,7 @@ function Projects() {
   ]
 },
     {
-  id: 9,
+  id: 6,
   title: 'Omnicreva Interface',
   cat: 'Landing Page',
   desc: 'Modern high-converting landing page for Omnicreva, featuring immersive UI, smooth animations, and a premium digital experience.',
@@ -1159,23 +1150,16 @@ function CurrentlyBuilding() {
   useEffect(()=>{const id=setTimeout(()=>setVis(true),3200);return()=>clearTimeout(id)},[])
   const projects = [
   {
-    name: 'TalentDash',
+    name: 'PromptlyOS',
     desc: 'Career tracking dashboard with real-time analytics and automated Supabase deployments',
-    stack: ['Next.js', 'Supabase', 'GitHub Actions'],
+    stack: ['Next.js','Tailwind CSS', 'Vite', 'OpenAI API', 'Supabase', 'GitHub Actions'],
     pct: 95,
     color: '#4F46E5' // Professional Indigo for a dashboard feel
   },
   {
-    name: 'AI Portfolio Builder',
-    desc: 'Let anyone generate a portfolio by answering 10 questions',
-    stack: ['Next.js', 'OpenAI', 'Prisma'],
-    pct: 68,
-    color: t.a
-  },
-  {
-    name: 'OmniCreava Studio',
-    desc: 'Premium agency site with client portal + project tracker',
-    stack: ['Next.js', 'Supabase', 'Framer'],
+    name: 'DripGather',
+    desc: 'Premium AI-Powered E-Commerce Web App',
+    stack: ['React', 'TypeScript', 'Vite', 'Tailwind CSS', 'Radix UI', 'React Query', 'Context API', 'Zod', 'GitHub Actions'],
     pct: 85,
     color: t.b
   }
@@ -1219,10 +1203,10 @@ function CurrentlyBuilding() {
 
  <button
   onClick={() => {
-    if (p.name === 'OmniCreava Studio') {
-      window.open('https://omni-creva.vercel.app/', '_blank');
-    } else if (p.name === 'TalentDash') {
-      window.open('https://talentdash-seven.vercel.app', '_blank');
+    if (p.name === 'DripGather') {
+      window.open('https://drip-gather.vercel.app/', '_blank');
+    } else if (p.name === 'PromptlyOS') {
+      window.open('https://promptlyos-seven.vercel.app/', '_blank');
     } else {
       setPopup(true);
       setTimeout(() => setPopup(false), 2000);
@@ -1741,6 +1725,7 @@ const VALUE_ITEMS=['Available for Work','Full-Stack Development','Brand Identity
 export default function Page() {
   const [loaded,setLoaded]=useState(false)
   const [theme,setTheme]=useState<ThemeKey>('neon')
+
   return (
     <ThemeCtx.Provider value={{theme,t:THEMES[theme],setTheme}}>
       <ToastProvider>
@@ -1781,7 +1766,6 @@ export default function Page() {
           @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
           @keyframes scroll-line{0%{transform:translateY(-100%)}100%{transform:translateY(300%)}}
           @keyframes spin-slow{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
-          *{cursor:none!important}
           ::-webkit-scrollbar{width:4px}
           ::-webkit-scrollbar-track{background:#050505}
           ::-webkit-scrollbar-thumb{background:linear-gradient(to bottom,#00FF00,#C77DFF);border-radius:2px}

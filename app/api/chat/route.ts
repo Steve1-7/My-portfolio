@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, getClientIdentifier } from "@/lib/rate-limit";
 
 // Avoid any Edge/runtime differences on Vercel.
 export const runtime = "nodejs";
@@ -62,6 +63,17 @@ function buildFallbackReply(userMessage: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const identifier = getClientIdentifier(request)
+    const rateLimitResult = rateLimit(identifier, 10, 60000) // 10 requests per minute
+    
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { success: false, error: "Too many requests. Please try again later." },
+        { status: 429 }
+      )
+    }
+
     // Parse request body
     let body: any = null;
     try {
@@ -82,14 +94,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Sanitize messages
+    const sanitizedMessages = messages.filter((msg: Message) => {
+      if (!msg || typeof msg !== 'object') return false
+      if (!msg.role || !msg.content) return false
+      if (typeof msg.content !== 'string') return false
+      if (msg.content.length > 10000) return false
+      if (!['user', 'assistant'].includes(msg.role)) return false
+      return true
+    }).map((msg: Message) => ({
+      role: msg.role,
+      content: msg.content.trim().slice(0, 10000)
+    }))
+
+    if (sanitizedMessages.length === 0) {
+      return NextResponse.json(
+        { error: "No valid messages provided" },
+        { status: 400 }
+      );
+    }
+
     // Security: limit message history to prevent abuse
-    const limitedMessages = messages.slice(-10);
+    const limitedMessages = sanitizedMessages.slice(-10);
     const lastUserMessage =
       [...limitedMessages].reverse().find((m) => m.role === "user")?.content ?? "";
 
     // Graceful fallback when API key is not configured
     if (!HF_API_KEY) {
-      console.error("Missing HUGGING_FACE_API_KEY environment variable");
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Missing HUGGING_FACE_API_KEY environment variable");
+      }
       return NextResponse.json(
         {
           success: true,
@@ -126,7 +160,9 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Hugging Face API Error:", errorText);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Hugging Face API Error:", errorText);
+      }
 
       const isLoadingError =
         response.status === 503 || errorText.toLowerCase().includes("loading");
@@ -164,18 +200,34 @@ export async function POST(request: NextRequest) {
         success: true,
         message: assistantMessage,
       },
-      { status: 200 }
+      {
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        }
+      }
     );
   } catch (error) {
     // Log error for debugging (server-side only)
-    console.error("Chat API Error:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Chat API Error:", error);
+    }
 
     return NextResponse.json(
       {
         success: false,
         error: "Something went wrong. Please try again.",
       },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        }
+      }
     );
   }
 }

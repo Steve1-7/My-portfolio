@@ -2,6 +2,9 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import ReactMarkdown from 'react-markdown'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 interface Message {
   id: string
@@ -18,8 +21,12 @@ const QUICK_SUGGESTIONS = [
   "What do you do?",
   "View live projects",
   "How to hire Steve?",
-  "Tech stack?"
+  "Tech stack?",
+  "Explain React hooks",
+  "Help me with TypeScript"
 ]
+
+const STORAGE_KEY = 'steve-portfolio-chat-history'
 
 const NAVIGATION_KEYWORDS: Array<{ intent: NavigationIntent; keywords: string[] }> = [
   { intent: { sectionId: 'hero', label: 'Home' }, keywords: ['home', 'top', 'hero', 'start'] },
@@ -76,19 +83,33 @@ export function ChatBot({
   assistantName = "Steve's AI Assistant",
 }: ChatBotProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([
-    {
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY)
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed
+          }
+        }
+      } catch (e) {
+        // Ignore storage errors
+      }
+    }
+    return [{
       id: '0',
       role: 'assistant',
-      content: "Hey! I'm Steve's AI assistant. Ask me anything about his work, services, or how to collaborate. 🚀"
-    }
-  ])
+      content: "Hey! I'm Steve's AI assistant. I can help with anything - from questions about Steve's work to general coding, technology, or creative topics. What's on your mind? 🚀"
+    }]
+  })
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [displayedText, setDisplayedText] = useState('')
   const [currentStreamingId, setCurrentStreamingId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to latest message
   const scrollToBottom = useCallback(() => {
@@ -100,6 +121,36 @@ export function ChatBot({
   useEffect(() => {
     scrollToBottom()
   }, [messages, displayedText, scrollToBottom])
+
+  // Save messages to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && messages.length > 0) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
+      } catch (e) {
+        // Ignore storage errors
+      }
+    }
+  }, [messages])
+
+  // Reset chat
+  const handleResetChat = useCallback(() => {
+    setMessages([{
+      id: Date.now().toString(),
+      role: 'assistant',
+      content: "Chat reset. I'm ready to help with anything - from questions about Steve's work to general coding, technology, or creative topics. What's on your mind? 🚀"
+    }])
+    setInput('')
+    setDisplayedText('')
+    setCurrentStreamingId(null)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(STORAGE_KEY)
+      } catch (e) {
+        // Ignore storage errors
+      }
+    }
+  }, [])
 
   // Typewriter effect for streaming response
   useEffect(() => {
@@ -118,7 +169,14 @@ export function ChatBot({
     }
   }, [displayedText, messages, currentStreamingId])
 
-  // Send message to API
+  // Copy to clipboard
+  const handleCopyToClipboard = useCallback((text: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text)
+    }
+  }, [])
+
+  // Send message to API with streaming support
   const handleSendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return
 
@@ -159,7 +217,7 @@ export function ChatBot({
     }
 
     try {
-      // Prepare messages for API, excluding streaming ones
+      // Prepare messages for API
       const apiMessages = messages.map(m => ({
         role: m.role as 'user' | 'assistant',
         content: m.id === currentStreamingId ? displayedText : m.content
@@ -169,6 +227,7 @@ export function ChatBot({
         content: text.trim()
       })
 
+      // Use non-streaming for now (streaming can be enabled later)
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
@@ -209,25 +268,23 @@ export function ChatBot({
       setCurrentStreamingId(assistantMessageId)
       scrollToBottom()
     } catch (error) {
-      console.error('Chat error:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Chat error:', error)
+        console.error('Error details:', error instanceof Error ? error.message : String(error))
+      }
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
         role: 'assistant',
-        content:
-          error instanceof Error && error.message.startsWith('Server returned a non-JSON response')
-            ? buildClientFallbackReply(text.trim())
-            : error instanceof Error
-              ? error.message
-              : 'Connection error. Try again.'
+        content: error instanceof Error ? error.message : 'Connection error. Try again.'
       }
       setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
       inputRef.current?.focus()
     }
-  }, [messages, isLoading, currentStreamingId, displayedText, scrollToBottom])
+  }, [messages, isLoading, currentStreamingId, displayedText, scrollToBottom, apiEndpoint])
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !isLoading) {
       e.preventDefault()
       handleSendMessage(input)
@@ -297,12 +354,21 @@ export function ChatBot({
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 <h3 className="text-sm font-mono text-white">{assistantName}</h3>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-xs text-gray-400 hover:text-green-500 transition-colors"
-              >
-                ─
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleResetChat}
+                  className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                  title="Reset chat"
+                >
+                  ↻
+                </button>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="text-xs text-gray-400 hover:text-green-500 transition-colors"
+                >
+                  ─
+                </button>
+              </div>
             </div>
 
             {/* Messages Container */}
@@ -318,7 +384,7 @@ export function ChatBot({
                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className="max-w-xs px-3 py-2 rounded-lg text-xs leading-relaxed font-mono"
+                      className="max-w-[85%] px-3 py-2 rounded-lg text-xs leading-relaxed"
                       style={{
                         background: message.role === 'user'
                           ? 'rgba(0, 255, 0, 0.15)'
@@ -329,14 +395,70 @@ export function ChatBot({
                         color: message.role === 'user' ? '#00FF00' : '#E5E7EB'
                       }}
                     >
-                      {/* Streaming text display */}
-                      {currentStreamingId === message.id
-                        ? displayedText
-                        : message.content}
+                      {/* Markdown rendering for assistant messages */}
+                      {message.role === 'assistant' ? (
+                        <div className="prose prose-invert prose-xs max-w-none">
+                          <ReactMarkdown
+                            components={{
+                              code({ node, inline, className, children, ...props }: any) {
+                                const match = /language-(\w+)/.exec(className || '')
+                                return !inline && match ? (
+                                  <SyntaxHighlighter
+                                    style={vscDarkPlus}
+                                    language={match[1]}
+                                    PreTag="div"
+                                    className="rounded-md"
+                                    {...props}
+                                  >
+                                    {String(children).replace(/\n$/, '')}
+                                  </SyntaxHighlighter>
+                                ) : (
+                                  <code className={className} {...props}>
+                                    {children}
+                                  </code>
+                                )
+                              },
+                              p: ({ children }) => <p className="mb-1">{children}</p>,
+                              ul: ({ children }) => <ul className="list-disc list-inside mb-1">{children}</ul>,
+                              ol: ({ children }) => <ol className="list-decimal list-inside mb-1">{children}</ol>,
+                              li: ({ children }) => <li className="mb-0.5">{children}</li>,
+                              a: ({ children, href }) => (
+                                <a href={href} className="text-green-400 hover:text-green-300 underline" target="_blank" rel="noopener noreferrer">
+                                  {children}
+                                </a>
+                              ),
+                              strong: ({ children }) => <strong className="font-bold text-white">{children}</strong>,
+                              em: ({ children }) => <em className="italic">{children}</em>,
+                            }}
+                          >
+                            {currentStreamingId === message.id
+                              ? displayedText
+                              : message.content}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        /* Plain text for user messages */
+                        <span className="font-mono">
+                          {currentStreamingId === message.id
+                            ? displayedText
+                            : message.content}
+                        </span>
+                      )}
                       
                       {/* Blinking cursor for streaming */}
                       {currentStreamingId === message.id && (
                         <span className="inline-block w-1 h-3 ml-1 bg-green-500 animate-pulse" />
+                      )}
+
+                      {/* Copy button for assistant messages */}
+                      {message.role === 'assistant' && currentStreamingId !== message.id && (
+                        <button
+                          onClick={() => handleCopyToClipboard(message.content)}
+                          className="ml-2 text-gray-500 hover:text-green-500 transition-colors text-xs"
+                          title="Copy to clipboard"
+                        >
+                          📋
+                        </button>
                       )}
                     </div>
                   </motion.div>
@@ -398,15 +520,16 @@ export function ChatBot({
 
             {/* Input Area */}
             <div className="p-4 border-t border-green-500/20 flex gap-2">
-              <input
+              <textarea
                 ref={inputRef}
-                type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={isLoading}
-                placeholder="Message..."
-                className="flex-1 px-3 py-2 rounded-lg bg-black/40 border border-green-500/20 text-xs font-mono text-green-500 placeholder-gray-600 focus:outline-none focus:border-green-500/50 disabled:opacity-50 transition-colors"
+                placeholder="Message... (Shift+Enter for new line)"
+                rows={1}
+                className="flex-1 px-3 py-2 rounded-lg bg-black/40 border border-green-500/20 text-xs font-mono text-green-500 placeholder-gray-600 focus:outline-none focus:border-green-500/50 disabled:opacity-50 transition-colors resize-none"
+                style={{ minHeight: '40px', maxHeight: '120px' }}
               />
               <motion.button
                 onClick={() => handleSendMessage(input)}

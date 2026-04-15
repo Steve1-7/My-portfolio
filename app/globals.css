@@ -46,9 +46,6 @@ body {
   color: #00FF00;
 }
 
-/* Cursor hide for custom cursor */
-* { cursor: none !important; }
-
 /* Animations */
 @keyframes pulse-neon {
   0%, 100% { opacity: 1; }
