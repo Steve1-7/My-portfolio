@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { rateLimit, getClientIdentifier } from "@/lib/rate-limit";
 
-// Ensure consistent behavior on Vercel (avoid Edge runtime differences).
+// Ensure consistent behavior on Vercel (Node runtime for OpenAI compatibility).
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -60,48 +59,28 @@ function buildFallbackReply(userMessage: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  // Wrap entire handler in try-catch to prevent HTML error pages
   try {
-    // Rate limiting
-    let identifier: string;
-    try {
-      identifier = getClientIdentifier(request)
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error("Error getting client identifier:", error);
-      }
-      identifier = 'unknown';
-    }
-
-    let rateLimitResult;
-    try {
-      rateLimitResult = rateLimit(identifier, 20, 60000) // 20 requests per minute
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error("Error in rate limiting:", error);
-      }
-      rateLimitResult = { success: true, remaining: 20, resetTime: Date.now() + 60000 };
-    }
-    
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { success: false, error: "Too many requests. Please try again later." },
-        { status: 429 }
-      )
-    }
-
     // Parse request body
     let body: any = null;
     try {
       body = await request.json();
-    } catch {
-      return NextResponse.json({ success: false, error: "Invalid JSON body" }, { status: 400 });
+    } catch (error) {
+      console.error("Failed to parse JSON body:", error);
+      return NextResponse.json(
+        { success: false, error: "Invalid JSON body" },
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     const { messages } = body as { messages: Message[] };
 
     // Input validation
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return NextResponse.json({ success: false, error: "Invalid request body" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Invalid request body" },
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     // Sanitize messages
@@ -118,7 +97,10 @@ export async function POST(request: NextRequest) {
     }))
 
     if (sanitizedMessages.length === 0) {
-      return NextResponse.json({ success: false, error: "No valid messages provided" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "No valid messages provided" },
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     const limitedMessages = sanitizedMessages.slice(-20);
@@ -126,46 +108,59 @@ export async function POST(request: NextRequest) {
     const lastUserMessage =
       [...limitedMessages].reverse().find((m) => m.role === "user")?.content ?? "";
 
+    // Check for OpenAI API key
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     if (!OPENAI_API_KEY) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error("OPENAI_API_KEY not found in environment");
-      }
+      console.error("OPENAI_API_KEY not found in environment");
       return NextResponse.json(
         {
           success: true,
           message: buildFallbackReply(lastUserMessage),
           source: "fallback-missing-openai-key",
         },
-        { status: 200 }
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     const model = process.env.OPENAI_CHAT_MODEL || "gpt-4o-mini";
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system" as Role, content: SYSTEM_PROMPT },
-          ...limitedMessages.map((m) => ({
-            role: m.role as Role,
-            content: m.content,
-          })),
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
-    });
+    // Call OpenAI API
+    let openaiResponse: Response;
+    try {
+      openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system" as Role, content: SYSTEM_PROMPT },
+            ...limitedMessages.map((m) => ({
+              role: m.role as Role,
+              content: m.content,
+            })),
+          ],
+          temperature: 0.7,
+          max_tokens: 2000,
+        }),
+      });
+    } catch (error) {
+      console.error("OpenAI API fetch error:", error);
+      return NextResponse.json(
+        {
+          success: true,
+          message: buildFallbackReply(lastUserMessage),
+          source: "fallback-fetch-error",
+        },
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-    if (!response.ok) {
-      // Try to return upstream error text, but still keep JSON output.
-      const errorText = await response.text().catch(() => "");
+    if (!openaiResponse.ok) {
+      const errorText = await openaiResponse.text().catch(() => "");
+      console.error("OpenAI API error response:", openaiResponse.status, errorText);
       return NextResponse.json(
         {
           success: true,
@@ -173,35 +168,67 @@ export async function POST(request: NextRequest) {
           source: "fallback-openai-upstream-error",
           upstream: errorText ? errorText.slice(0, 500) : undefined,
         },
-        { status: 200 }
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const data = await response.json();
+    let data: any;
+    try {
+      data = await openaiResponse.json();
+    } catch (error) {
+      console.error("Failed to parse OpenAI response JSON:", error);
+      return NextResponse.json(
+        {
+          success: true,
+          message: buildFallbackReply(lastUserMessage),
+          source: "fallback-parse-error",
+        },
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const assistantMessage =
       data?.choices?.[0]?.message?.content?.trim() ||
       "I couldn't generate a response. Try again.";
 
-    return NextResponse.json({ success: true, message: assistantMessage }, { 
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+    return NextResponse.json(
+      { success: true, message: assistantMessage },
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        }
       }
-    });
+    );
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error("OpenAI Chat API Error:", error);
-    }
+    console.error("Unhandled error in chat-openai route:", error);
     return NextResponse.json(
       {
         success: false,
         error: "Something went wrong. Please try again.",
       },
-      { status: 500 }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
+}
+
+// Handle OPTIONS for CORS
+export async function OPTIONS() {
+  return NextResponse.json(
+    {},
+    {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      }
+    }
+  );
 }
 
 // Debug helper for deployments: prevents confusing HTML 404 pages.
@@ -211,7 +238,7 @@ export async function GET() {
       success: false,
       error: "Use POST /api/chat-openai with JSON body: { messages: [{ role: 'user'|'assistant', content: string }] }",
     },
-    { status: 405 }
+    { status: 405, headers: { 'Content-Type': 'application/json' } }
   );
 }
 

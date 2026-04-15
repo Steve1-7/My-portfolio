@@ -235,24 +235,38 @@ export function ChatBot({
         },
         body: JSON.stringify({ messages: apiMessages })
       })
-      const contentType = response.headers.get('content-type') || ''
 
-      let data: any = null
-      if (contentType.includes('application/json')) {
-        data = await response.json()
-      } else {
-        const raw = await response.text()
-        throw new Error(
-          `Server returned a non-JSON response (${response.status}, ${contentType}) from ${apiEndpoint}. ${raw.slice(0, 180)}`
-        )
-      }
-
+      // Check response status
       if (!response.ok) {
-        throw new Error(data?.error || 'Connection error. Try again.')
+        const errorText = await response.text().catch(() => 'Unknown error')
+        console.error('API error response:', response.status, errorText)
+        throw new Error(`Server error (${response.status}): ${errorText.slice(0, 200)}`)
       }
 
-      if (!data?.success || !data?.message) {
-        throw new Error(data?.error || 'Failed to get response')
+      // Check content type
+      const contentType = response.headers.get('content-type') || ''
+      if (!contentType.includes('application/json')) {
+        const raw = await response.text().catch(() => '')
+        console.error('Non-JSON response:', contentType, raw.slice(0, 200))
+        throw new Error(`Server returned non-JSON response. Please try again.`)
+      }
+
+      // Parse JSON
+      let data: any = null
+      try {
+        data = await response.json()
+      } catch (error) {
+        console.error('Failed to parse JSON response:', error)
+        throw new Error('Invalid response from server. Please try again.')
+      }
+
+      // Validate response structure
+      if (!data?.success) {
+        throw new Error(data?.error || 'Request failed. Please try again.')
+      }
+
+      if (!data?.message) {
+        throw new Error('No response from server. Please try again.')
       }
 
       // Add assistant message with streaming ID
