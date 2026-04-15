@@ -1,12 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback, createContext, useContext, Suspense } from 'react'
 import { motion, useInView, AnimatePresence, useMotionValue, useTransform, useSpring, useScroll, useSpring as useSpringFn } from 'framer-motion'
-import dynamic from 'next/dynamic'
-
-const OpenAIChatBot = dynamic(() => import('./components/OpenAIChatBot').then(mod => ({ default: mod.OpenAIChatBot })), {
-  loading: () => <div style={{ position: 'fixed', bottom: 24, right: 24, width: 56, height: 56, borderRadius: '50%', background: 'rgba(0, 255, 0, 0.1)', border: '1px solid rgba(0, 255, 0, 0.3)' }} />,
-  ssr: false
-})
 
 // ── THEME ──────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -422,11 +416,6 @@ function CommandPalette() {
       </AnimatePresence>
     </>
   )
-}
-
-// ── AI CHATBOT ─────────────────────────────────────────────────────────────────
-function AIChatBot() {
-  return <OpenAIChatBot />
 }
 
 // ── CONTEXT MENU ───────────────────────────────────────────────────────────────
@@ -1752,7 +1741,6 @@ export default function Page() {
               <Footer />
               <ScrollTop />
               <CommandPalette />
-              <AIChatBot />
               <ContextMenu />
               <KeyboardShortcuts />
               <CurrentlyBuilding />
