@@ -4,6 +4,22 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Health check endpoint
+export async function GET() {
+  return NextResponse.json(
+    {
+      success: true,
+      message: "API is healthy",
+      timestamp: new Date().toISOString(),
+      env: {
+        hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+        nodeEnv: process.env.NODE_ENV,
+      }
+    },
+    { status: 200, headers: { 'Content-Type': 'application/json' } }
+  );
+}
+
 type Role = "system" | "user" | "assistant";
 
 interface Message {
@@ -83,30 +99,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Sanitize messages
-    const sanitizedMessages = messages.filter((msg: Message) => {
-      if (!msg || typeof msg !== 'object') return false
-      if (!msg.role || !msg.content) return false
-      if (typeof msg.content !== 'string') return false
-      if (msg.content.length > 10000) return false // Max 10k characters per message
-      if (!['user', 'assistant'].includes(msg.role)) return false
-      return true
-    }).map((msg: Message) => ({
-      role: msg.role,
-      content: msg.content.trim().slice(0, 10000)
-    }))
-
-    if (sanitizedMessages.length === 0) {
-      return NextResponse.json(
-        { success: false, error: "No valid messages provided" },
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const limitedMessages = sanitizedMessages.slice(-20);
-
     const lastUserMessage =
-      [...limitedMessages].reverse().find((m) => m.role === "user")?.content ?? "";
+      messages[messages.length - 1]?.content ?? "";
 
     // Check for OpenAI API key
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -122,41 +116,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Call OpenAI API with minimal configuration
     const model = process.env.OPENAI_CHAT_MODEL || "gpt-4o-mini";
 
-    // Call OpenAI API
-    let openaiResponse: Response;
-    try {
-      openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system" as Role, content: SYSTEM_PROMPT },
-            ...limitedMessages.map((m) => ({
-              role: m.role as Role,
-              content: m.content,
-            })),
-          ],
-          temperature: 0.7,
-          max_tokens: 2000,
-        }),
-      });
-    } catch (error) {
-      console.error("OpenAI API fetch error:", error);
-      return NextResponse.json(
-        {
-          success: true,
-          message: buildFallbackReply(lastUserMessage),
-          source: "fallback-fetch-error",
-        },
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system" as Role, content: SYSTEM_PROMPT },
+          ...messages.map((m: Message) => ({
+            role: m.role as Role,
+            content: m.content,
+          })),
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+      }),
+    });
 
     if (!openaiResponse.ok) {
       const errorText = await openaiResponse.text().catch(() => "");
@@ -172,21 +153,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let data: any;
-    try {
-      data = await openaiResponse.json();
-    } catch (error) {
-      console.error("Failed to parse OpenAI response JSON:", error);
-      return NextResponse.json(
-        {
-          success: true,
-          message: buildFallbackReply(lastUserMessage),
-          source: "fallback-parse-error",
-        },
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
+    const data = await openaiResponse.json();
     const assistantMessage =
       data?.choices?.[0]?.message?.content?.trim() ||
       "I couldn't generate a response. Try again.";
@@ -228,17 +195,6 @@ export async function OPTIONS() {
         'Access-Control-Allow-Headers': 'Content-Type',
       }
     }
-  );
-}
-
-// Debug helper for deployments: prevents confusing HTML 404 pages.
-export async function GET() {
-  return NextResponse.json(
-    {
-      success: false,
-      error: "Use POST /api/chat-openai with JSON body: { messages: [{ role: 'user'|'assistant', content: string }] }",
-    },
-    { status: 405, headers: { 'Content-Type': 'application/json' } }
   );
 }
 
