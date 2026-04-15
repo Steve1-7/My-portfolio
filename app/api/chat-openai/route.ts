@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const { messages, stream = false } = body as { messages: Message[]; stream?: boolean };
+    const { messages } = body as { messages: Message[] };
 
     // Input validation
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -126,95 +126,6 @@ export async function POST(request: NextRequest) {
 
     const model = process.env.OPENAI_CHAT_MODEL || "gpt-4o-mini";
 
-    // Streaming response
-    if (stream) {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system" as Role, content: SYSTEM_PROMPT },
-            ...limitedMessages.map((m) => ({
-              role: m.role as Role,
-              content: m.content,
-            })),
-          ],
-          temperature: 0.7,
-          max_tokens: 2000,
-          stream: true,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        return NextResponse.json(
-          {
-            success: false,
-            message: buildFallbackReply(lastUserMessage),
-            source: "fallback-openai-upstream-error",
-            upstream: errorText ? errorText.slice(0, 500) : undefined,
-          },
-          { status: 200 }
-        );
-      }
-
-      const encoder = new TextEncoder();
-      const decoder = new TextDecoder();
-
-      const streamResponse = new ReadableStream({
-        async start(controller) {
-          try {
-            const reader = response.body?.getReader();
-            if (!reader) throw new Error('No reader');
-
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-
-              const chunk = decoder.decode(value);
-              const lines = chunk.split('\n').filter(line => line.trim() !== '');
-
-              for (const line of lines) {
-                if (line === 'data: [DONE]') {
-                  controller.close();
-                  return;
-                }
-                if (line.startsWith('data: ')) {
-                  try {
-                    const data = JSON.parse(line.slice(6));
-                    const content = data.choices?.[0]?.delta?.content;
-                    if (content) {
-                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
-                    }
-                  } catch (e) {
-                    // Skip invalid JSON
-                  }
-                }
-              }
-            }
-          } catch (error) {
-            controller.error(error);
-          }
-        },
-      });
-
-      return new Response(streamResponse, {
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
-      });
-    }
-
-    // Non-streaming response (fallback)
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
