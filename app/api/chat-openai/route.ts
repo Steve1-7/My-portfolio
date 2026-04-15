@@ -62,8 +62,25 @@ function buildFallbackReply(userMessage: string): string {
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting
-    const identifier = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(identifier, 20, 60000) // 20 requests per minute
+    let identifier: string;
+    try {
+      identifier = getClientIdentifier(request)
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error getting client identifier:", error);
+      }
+      identifier = 'unknown';
+    }
+
+    let rateLimitResult;
+    try {
+      rateLimitResult = rateLimit(identifier, 20, 60000) // 20 requests per minute
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error in rate limiting:", error);
+      }
+      rateLimitResult = { success: true, remaining: 20, resetTime: Date.now() + 60000 };
+    }
     
     if (!rateLimitResult.success) {
       return NextResponse.json(
