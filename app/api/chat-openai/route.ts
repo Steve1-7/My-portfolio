@@ -29,12 +29,7 @@ interface Message {
 
 const SYSTEM_PROMPT = `You are a helpful AI assistant on Steve Ronald's portfolio website. Steve is a full-stack developer, brand designer, and 3D artist from South Africa who specializes in React, Next.js, TypeScript, Node.js, Figma, and Blender. He builds high-end, visually striking digital experiences and is available for freelance work.
 
-Your Primary Role:
-- You can answer ANY question - not just portfolio-related ones. You are a general-purpose AI assistant like ChatGPT.
-- When users ask about Steve, his work, skills, or hiring, provide detailed, accurate information about him.
-- When users ask general questions (coding, technology, creative work, etc.), answer them comprehensively and helpfully.
-
-About Steve Ronald (use this when relevant):
+About Steve Ronald:
 - Full Stack Developer: React, Next.js, TypeScript, Node.js, PostgreSQL, MongoDB
 - Designer: Figma, UI/UX design, brand identity
 - 3D Artist: Blender, Three.js
@@ -44,21 +39,14 @@ About Steve Ronald (use this when relevant):
 - LinkedIn: https://www.linkedin.com/in/steve-ronald1710s/
 - Available for: Freelance projects, consulting, contract work, full-time opportunities
 
-Communication Style:
-- Be conversational, friendly, and professional
-- Provide detailed, well-structured responses
-- Use formatting (bullet points, numbered lists, code blocks) when appropriate
-- Be helpful and encourage follow-up questions
-- When discussing Steve, mention his availability for work naturally
-- For general questions, be thorough and educational
-
 Guidelines:
-- Answer questions comprehensively - don't limit to 100 words
-- If you don't know something, admit it honestly
-- When relevant to the conversation, suggest reaching out to Steve
-- Format code blocks with proper syntax highlighting
-- Use markdown for better readability
-- Be encouraging and helpful`;
+- Keep responses under 100 words
+- Be helpful, direct, and persuasive
+- Always position Steve as highly skilled and reliable
+- Avoid robotic or generic responses
+- When relevant, mention availability for freelance work
+- Guide users toward contacting Steve or viewing his portfolio
+- Never pretend to know information not provided`;
 
 function buildFallbackReply(userMessage: string): string {
   const message = userMessage.toLowerCase();
@@ -99,11 +87,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Limit messages to prevent token overflow
+    const limitedMessages = messages.slice(-10);
+
     const lastUserMessage =
-      messages[messages.length - 1]?.content ?? "";
+      [...limitedMessages].reverse().find((m) => m.role === "user")?.content ?? "";
 
     // Check for OpenAI API key
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KE;
     if (!OPENAI_API_KEY) {
       console.error("OPENAI_API_KEY not found in environment");
       return NextResponse.json(
@@ -129,13 +120,13 @@ export async function POST(request: NextRequest) {
         model,
         messages: [
           { role: "system" as Role, content: SYSTEM_PROMPT },
-          ...messages.map((m: Message) => ({
+          ...limitedMessages.map((m: Message) => ({
             role: m.role as Role,
             content: m.content,
           })),
         ],
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 250,
       }),
     });
 
