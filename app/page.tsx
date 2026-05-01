@@ -280,7 +280,7 @@ function PageLoader({ onDone }:{ onDone:()=>void }) {
             <div style={{background:'rgba(0,255,0,0.02)',border:'1px solid rgba(0,255,0,0.1)',borderRadius:2,padding:'1.5rem',marginBottom:'1.5rem',minHeight:220}}>
               <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:'1rem',paddingBottom:'0.75rem',borderBottom:'1px solid rgba(0,255,0,0.08)'}}>
                 {['#FF5F57','#FFBD2E','#28CA41'].map(c=><div key={c} style={{width:10,height:10,borderRadius:'50%',background:c}} />)}
-                <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:10,color:'rgba(0,255,0,0.3)',marginLeft:8}}>omnicreava@studio:~$</span>
+                <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:10,color:'rgba(0,255,0,0.3)',marginLeft:8}}>steve@portfolio:~$</span>
               </div>
               {BOOT.map((line,i)=>lines.includes(i)&&(
                 <motion.div key={i} initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}}
@@ -411,7 +411,7 @@ function ContextMenu() {
         <motion.div ref={menuRef} initial={{opacity:0,scale:.92,y:-8}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:.92,y:-8}} transition={{duration:.15}}
           style={{position:'fixed',zIndex:9500,width:200,borderRadius:2,left:pos.x,top:pos.y,background:'rgba(6,6,6,0.98)',border:`1px solid ${t.a}12`,boxShadow:'0 20px 60px rgba(0,0,0,0.9)',backdropFilter:'blur(20px)',overflow:'hidden'}}>
           <div style={{height:1,background:`linear-gradient(90deg,${t.a},${t.b},transparent)`}} />
-          <div style={{padding:'6px 12px 4px',fontFamily:'JetBrains Mono,monospace',fontSize:9,color:`${t.a}40`,textTransform:'uppercase',letterSpacing:'0.15em'}}>OmniCreava Studio</div>
+          <div style={{padding:'6px 12px 4px',fontFamily:'JetBrains Mono,monospace',fontSize:9,color:`${t.a}40`,textTransform:'uppercase',letterSpacing:'0.15em'}}>Eva-Tech-Studio</div>
           <div style={{height:1,margin:'0 10px 4px',background:'rgba(255,255,255,0.04)'}} />
           {items.map((item,i)=>(
             <button key={i} onClick={item.action} data-hover="true" style={{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',background:'transparent',border:'none',cursor:'pointer',textAlign:'left',transition:'background .15s'}}
@@ -1385,7 +1385,7 @@ function Footer() {
               <span style={{color:`${t.a}30`}}>·</span>
               <span>Framer Motion</span>
               <span style={{color:`${t.a}30`}}>·</span>
-              <span style={{color:t.a}}>OmniCreava Studio</span>
+              <span style={{color:t.a}}>Eva-Tech-Studio</span>
             </div>
           </div>
         )}

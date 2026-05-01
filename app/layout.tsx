@@ -5,7 +5,7 @@ import Analytics from './components/Analytics'
 
 export const metadata: Metadata = {
   title: 'Steve Ronald | Full-Stack Developer & Brand Designer',
-  description: 'OmniCreava Studio — Premium digital experiences, brand identity, and full-stack development.',
+  description: 'Eva-Tech-Studio — Premium digital experiences, brand identity, and full-stack development.',
   keywords: ['Full-Stack Developer', 'React', 'Next.js', 'TypeScript', 'Brand Design', '3D Artist', 'UI/UX', 'Web Development', 'South Africa'],
   authors: [{ name: 'Steve Ronald', url: 'https://github.com/Steve1-7' }],
   creator: 'Steve Ronald',
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://my-portfolio-six-virid-22.vercel.app',
     title: 'Steve Ronald | Full-Stack Developer & Brand Designer',
-    description: 'OmniCreava Studio — Premium digital experiences, brand identity, and full-stack development.',
+    description: 'Eva-Tech-Studio — Premium digital experiences, brand identity, and full-stack development.',
     siteName: 'Steve Ronald Portfolio',
     images: [
       {
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Steve Ronald | Full-Stack Developer & Brand Designer',
-    description: 'OmniCreava Studio — Premium digital experiences, brand identity, and full-stack development.',
+    description: 'Eva-Tech-Studio — Premium digital experiences, brand identity, and full-stack development.',
     images: ['/og-image.jpg'],
     creator: '@SteveRonald',
   },
