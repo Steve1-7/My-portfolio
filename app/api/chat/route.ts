@@ -27,11 +27,49 @@ Rules:
 - Keep responses brief but informative (2-4 sentences max)
 - Always maintain a helpful, professional tone`;
 
+// Determine query complexity based on message content
+function getQueryComplexity(messages: { role: string; content: string }[]): 'simple' | 'normal' | 'complex' {
+  const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
+  const conversationLength = messages.length;
+  
+  // Simple queries: greetings, short questions, basic info requests
+  const simplePatterns = ['hi', 'hello', 'hey', 'how are you', 'what\'s up', 'who are you', 'help'];
+  const isSimple = simplePatterns.some(p => lastMessage.includes(p)) || lastMessage.length < 20;
+  
+  // Complex queries: multi-part questions, technical deep dives, comparisons
+  const complexPatterns = [
+    'compare', 'difference between', 'vs', 'versus',
+    'explain in detail', 'how does', 'technical', 'architecture',
+    'experience with', 'portfolio', 'multiple', 'and', 'also'
+  ];
+  const isComplex = complexPatterns.some(p => lastMessage.includes(p)) || 
+                    lastMessage.length > 100 ||
+                    conversationLength > 6;
+  
+  if (isSimple) return 'simple';
+  if (isComplex) return 'complex';
+  return 'normal';
+}
+
+// Select model based on query complexity
+function getModel(complexity: 'simple' | 'normal' | 'complex'): string {
+  switch (complexity) {
+    case 'simple':
+      return 'gemini-1.5-flash'; // Fast, cost-effective for simple queries
+    case 'normal':
+      return 'gemini-1.5-flash-latest'; // Latest flash for normal queries
+    case 'complex':
+      return 'gemini-1.5-pro'; // Pro model for complex queries
+    default:
+      return 'gemini-1.5-flash';
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
     
-    const apiKey = process.env.HUGGINGFACE_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { error: 'API key not configured' },
@@ -39,27 +77,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Format messages for Hugging Face
-    const conversation = messages.map((m: { role: string; content: string }) => 
-      `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
-    ).join('\n');
+    // Determine query complexity and select appropriate model
+    const complexity = getQueryComplexity(messages);
+    const model = getModel(complexity);
+    
+    console.log(`Using ${model} for ${complexity} query`);
 
-    const prompt = `${SYSTEM_PROMPT}\n\n${conversation}\nAssistant:`;
+    // Format conversation history
+    const conversation = messages.map((m: { role: string; content: string }) => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }]
+    }));
 
     const response = await fetch(
-      'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          inputs: `<s>[INST] ${prompt} [/INST]`,
-          parameters: {
-            max_new_tokens: 250,
+          systemInstruction: {
+            parts: [{ text: SYSTEM_PROMPT }]
+          },
+          contents: conversation,
+          generationConfig: {
+            maxOutputTokens: complexity === 'complex' ? 500 : 250,
             temperature: 0.7,
-            return_full_text: false,
           },
         }),
       }
@@ -67,7 +111,7 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('Hugging Face API error:', errorData);
+      console.error('Gemini API error:', errorData);
       return NextResponse.json(
         { error: 'Failed to get response from AI' },
         { status: 500 }
@@ -75,10 +119,10 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await response.json();
-    const aiResponse = data[0]?.generated_text?.trim() || 
+    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 
       "I'm here to help you learn about Steve and his work. What would you like to know?";
 
-    return NextResponse.json({ message: aiResponse });
+    return NextResponse.json({ message: aiResponse, modelUsed: model });
   } catch (error) {
     console.error('Chat API error:', error);
     return NextResponse.json(
