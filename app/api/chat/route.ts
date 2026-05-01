@@ -27,42 +27,55 @@ Rules:
 - Keep responses brief but informative (2-4 sentences max)
 - Always maintain a helpful, professional tone`;
 
-// Determine query complexity based on message content
-function getQueryComplexity(messages: { role: string; content: string }[]): 'simple' | 'normal' | 'complex' {
-  const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
-  const conversationLength = messages.length;
-  
-  // Simple queries: greetings, short questions, basic info requests
-  const simplePatterns = ['hi', 'hello', 'hey', 'how are you', 'what\'s up', 'who are you', 'help'];
-  const isSimple = simplePatterns.some(p => lastMessage.includes(p)) || lastMessage.length < 20;
-  
-  // Complex queries: multi-part questions, technical deep dives, comparisons
-  const complexPatterns = [
-    'compare', 'difference between', 'vs', 'versus',
-    'explain in detail', 'how does', 'technical', 'architecture',
-    'experience with', 'portfolio', 'multiple', 'and', 'also'
-  ];
-  const isComplex = complexPatterns.some(p => lastMessage.includes(p)) || 
-                    lastMessage.length > 100 ||
-                    conversationLength > 6;
-  
-  if (isSimple) return 'simple';
-  if (isComplex) return 'complex';
-  return 'normal';
-}
+// Available models in priority order
+const MODELS = [
+  "gemini-3-flash-preview",        // MAIN - fast and capable
+  "gemini-3.1-pro-preview",        // SMART fallback - more intelligent
+  "gemini-3.1-flash-lite-preview"  // CHEAP fallback - cost effective
+];
 
-// Select model based on query complexity
-function getModel(complexity: 'simple' | 'normal' | 'complex'): string {
-  switch (complexity) {
-    case 'simple':
-      return 'gemini-1.5-flash'; // Fast, cost-effective for simple queries
-    case 'normal':
-      return 'gemini-1.5-flash-latest'; // Latest flash for normal queries
-    case 'complex':
-      return 'gemini-1.5-pro'; // Pro model for complex queries
-    default:
-      return 'gemini-1.5-flash';
+// Try to generate content with fallback models
+async function generateWithFallback(
+  apiKey: string,
+  conversation: { role: string; parts: { text: string }[] }[],
+  maxTokens: number
+): Promise<{ text: string; modelUsed: string } | null> {
+  
+  for (const model of MODELS) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents: conversation,
+            generationConfig: {
+              maxOutputTokens: maxTokens,
+              temperature: 0.7,
+            },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          console.log(`Successfully used model: ${model}`);
+          return { text, modelUsed: model };
+        }
+      } else {
+        const errorData = await response.text();
+        console.log(`Model ${model} failed:`, errorData.substring(0, 200));
+      }
+    } catch (error) {
+      console.log(`Model ${model} error:`, error);
+    }
   }
+  
+  return null;
 }
 
 export async function POST(req: NextRequest) {
@@ -77,52 +90,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Determine query complexity and select appropriate model
-    const complexity = getQueryComplexity(messages);
-    const model = getModel(complexity);
-    
-    console.log(`Using ${model} for ${complexity} query`);
-
     // Format conversation history
     const conversation = messages.map((m: { role: string; content: string }) => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.content }]
     }));
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: SYSTEM_PROMPT }]
-          },
-          contents: conversation,
-          generationConfig: {
-            maxOutputTokens: complexity === 'complex' ? 500 : 250,
-            temperature: 0.7,
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Gemini API error:', errorData);
+    // Try models with fallback
+    const result = await generateWithFallback(apiKey, conversation, 250);
+    
+    if (!result) {
       return NextResponse.json(
-        { error: 'Failed to get response from AI' },
+        { error: 'All AI models failed. Please try again later.' },
         { status: 500 }
       );
     }
 
-    const data = await response.json();
-    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 
-      "I'm here to help you learn about Steve and his work. What would you like to know?";
-
-    return NextResponse.json({ message: aiResponse, modelUsed: model });
+    return NextResponse.json({ message: result.text, modelUsed: result.modelUsed });
   } catch (error) {
     console.error('Chat API error:', error);
     return NextResponse.json(
