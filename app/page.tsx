@@ -1246,7 +1246,7 @@ function Gallery() {
   const [lb,setLb]=useState<{idx:number}|null>(null)
   const { t } = useTheme()
   const data:{logos:{s:string;l:string}[];d3:{s:string;l:string}[]}={
-    logos:[{s:'img/chinake.jpg',l:'Chinake'},{s:'img/saseka.jpg',l:'Saseka'},{s:'img/media.png',l:'Media Co.'},{s:'img/theo.jpg',l:'Theo'},{s:'img/steve1.jpg',l:'Steve Brand'},{s:'img/Omni.png',l:'Omni'},{s:'img/hytkk.jpg',l:'Hytk'},{s:'img/lux.png',l:'Lux'}],
+    logos:[{s:'img/chinake.jpg',l:'Chinake'},{s:'img/saseka.jpg',l:'Saseka'},{s:'img/media.png',l:'Media Co.'},{s:'img/theo.jpg',l:'Theo'},{s:'img/steve1.jpg',l:'Steve Brand'},{s:'img/Omni.png',l:'Omni'},{s:'img/hytkk.jpg',l:'Hytk'},{s:'img/lux.png',l:'Lux'},{s:'img/logo5.webp',l:'Logo 5'}],
     d3:[{s:'img/3d1.jpg',l:'3D Render I'},{s:'img/3d2.jpg',l:'3D Render II'},{s:'img/3d1 (1).jpg',l:'3D Render III'},{s:'img/ball2.jpg',l:'Orb'},{s:'img/2_05am.png',l:'2:05 AM'},{s:'img/ggnn.jpg',l:'Abstract I'},{s:'img/ghgn.jpg',l:'Abstract II'},{s:'img/ice1.jpg',l:'Ice'},{s:'img/gonn.jpg',l:'Gonn'},{s:'img/cube1.jpg',l:'Cube Study'},{s:'img/cookis.png',l:'Cookies'},{s:'img/cfinal.png',l:'C Final'}]
   }
   const imgs=data[tab]
