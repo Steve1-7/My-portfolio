@@ -1,15 +1,11 @@
 'use client'
 import { useState, useEffect, useRef, useCallback, createContext, useContext, Suspense } from 'react'
 import { motion, useInView, AnimatePresence, useMotionValue, useTransform, useSpring, useScroll, useSpring as useSpringFn } from 'framer-motion'
+import FloatingChat from './components/FloatingChat'
 
 // ── THEME ──────────────────────────────────────────────────────────────────────
-const THEMES = {
-  neon: { name:'Neon', a:'#00FF00', b:'#C77DFF', bg:'#050505', card:'#0A0A0A', text:'#ffffff' },
-  gold: { name:'Gold', a:'#F9CA24', b:'#FF6B6B', bg:'#050402', card:'#0C0A04', text:'#ffffff' },
-  ice:  { name:'Ice',  a:'#38BDF8', b:'#ffffff', bg:'#030508', card:'#07090F', text:'#ffffff' },
-}
-type ThemeKey = keyof typeof THEMES
-const ThemeCtx = createContext<{theme:ThemeKey;t:typeof THEMES.neon;setTheme:(k:ThemeKey)=>void}>({theme:'neon',t:THEMES.neon,setTheme:()=>{}})
+const THEME = { a:'#00FF00', b:'#C77DFF', bg:'#050505', card:'#0A0A0A', text:'#ffffff' }
+const ThemeCtx = createContext<{t:typeof THEME}>({t:THEME})
 const useTheme = () => useContext(ThemeCtx)
 
 // ── TOASTS ─────────────────────────────────────────────────────────────────────
@@ -168,36 +164,6 @@ function KeyboardShortcuts() {
   )
 }
 
-// ── THEME SWITCHER ─────────────────────────────────────────────────────────────
-function ThemeSwitcher() {
-  const { theme, setTheme, t } = useTheme()
-  const toast = useToast()
-  const [open, setOpen] = useState(false)
-  return (
-    <div style={{position:'relative'}}>
-      <button onClick={()=>setOpen(v=>!v)} data-hover="true"
-        style={{padding:'7px 12px',borderRadius:2,fontFamily:'JetBrains Mono,monospace',fontSize:10,background:`${t.a}0C`,border:`1px solid ${t.a}25`,color:t.a,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
-        <span style={{width:8,height:8,borderRadius:1,background:`linear-gradient(135deg,${t.a},${t.b})`}} />
-        {THEMES[theme].name}<span style={{opacity:.5,fontSize:8}}>▼</span>
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div initial={{opacity:0,scale:.92,y:-8}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:.92,y:-8}}
-            style={{position:'absolute',top:'110%',right:0,width:148,borderRadius:2,background:'#080808',border:'1px solid rgba(255,255,255,0.08)',boxShadow:'0 20px 60px rgba(0,0,0,0.9)',overflow:'hidden',zIndex:999}}>
-            {(Object.keys(THEMES) as ThemeKey[]).map(k=>(
-              <button key={k} onClick={()=>{setTheme(k);setOpen(false);toast(`Theme: ${THEMES[k].name}`,'◈')}} data-hover="true"
-                style={{width:'100%',padding:'10px 14px',display:'flex',alignItems:'center',gap:10,background:theme===k?`${THEMES[k].a}08`:'transparent',border:'none',borderLeft:`2px solid ${theme===k?THEMES[k].a:'transparent'}`,cursor:'pointer',transition:'all .2s'}}>
-                <span style={{width:10,height:10,borderRadius:1,background:`linear-gradient(135deg,${THEMES[k].a},${THEMES[k].b})`,flexShrink:0}} />
-                <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:11,color:theme===k?THEMES[k].a:'rgba(255,255,255,0.35)'}}>{THEMES[k].name}</span>
-                {theme===k&&<span style={{marginLeft:'auto',color:THEMES[k].a,fontSize:10}}>✓</span>}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
 
 // ── CURSOR LABEL FOLLOWER ──────────────────────────────────────────────────────
 function CursorFollower() {
@@ -356,8 +322,7 @@ function CommandPalette() {
     {id:'about',label:'About Me',desc:'Background & timeline',icon:'◉',cat:'Navigate',action:()=>go('about')},
     {id:'skills',label:'Skills',desc:'Core strengths',icon:'⚡',cat:'Navigate',action:()=>go('skills')},
     {id:'projects',label:'Projects',desc:'Live platforms',icon:'⊞',cat:'Navigate',action:()=>go('projects')},
-    {id:'services',label:'Services',desc:'Pricing & packages',icon:'💎',cat:'Navigate',action:()=>go('services')},
-    {id:'testimonials',label:'Testimonials',desc:'Client reviews',icon:'★',cat:'Navigate',action:()=>go('testimonials')},
+        {id:'testimonials',label:'Testimonials',desc:'Client reviews',icon:'★',cat:'Navigate',action:()=>go('testimonials')},
     {id:'gallery',label:'Gallery',desc:'Logos & 3D work',icon:'◈',cat:'Navigate',action:()=>go('gallery')},
     {id:'contact',label:'Contact',desc:'Hire Steve',icon:'✉',cat:'Navigate',action:()=>go('contact')},
     {id:'email',label:'Copy Email',desc:'stevezuluu@gmail.com',icon:'@',cat:'Actions',action:()=>{ navigator.clipboard.writeText('stevezuluu@gmail.com'); toast('Email copied!','✓'); setOpen(false) }},
@@ -565,7 +530,7 @@ function Nav() {
     window.addEventListener('resize',resize); return ()=>window.removeEventListener('resize',resize)
   },[])
   useEffect(()=>{
-    const sections=['hero','about','skills','projects','services','testimonials','gallery','contact']
+    const sections=['hero','about','skills','projects','testimonials','gallery','contact']
     const fn=()=>{
       let cur='hero'
       sections.forEach(id=>{const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<=120)cur=id})
@@ -576,7 +541,7 @@ function Nav() {
     window.addEventListener('scroll',fn,{passive:true}); return ()=>window.removeEventListener('scroll',fn)
   },[])
   const go=(id:string)=>{ document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); setActive(id); setMenuOpen(false) }
-  const links=[{id:'about',l:'About'},{id:'skills',l:'Skills'},{id:'projects',l:'Work'},{id:'services',l:'Services'},{id:'testimonials',l:'Reviews'},{id:'gallery',l:'Gallery'},{id:'contact',l:'Contact'}]
+  const links=[{id:'about',l:'About'},{id:'skills',l:'Skills'},{id:'projects',l:'Work'},{id:'testimonials',l:'Reviews'},{id:'gallery',l:'Gallery'},{id:'contact',l:'Contact'}]
   return (
     <>
       <motion.nav initial={{y:-80,opacity:0}} animate={{y:0,opacity:1}} transition={{duration:.7,delay:.2}}
@@ -598,11 +563,10 @@ function Nav() {
             </div>
           ):null}
           <div style={{display:'flex',alignItems:'center',gap:'clamp(6px,1.5vw,10px)',flexShrink:0}}>
-            <ThemeSwitcher />
             {!isMobile&&(
               <>
                 <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'JetBrains Mono,monospace',fontSize:'clamp(9px,1.5vw,11px)',color:`${t.a}55`}}>
-                  <span style={{width:7,height:7,borderRadius:'50%',background:t.a,boxShadow:`0 0 8px ${t.a}`,animation:'pulse-neon 2s ease-in-out infinite'}} />Available
+                  <span style={{width:7,height:7,borderRadius:'50%',background:t.a,boxShadow:`0 0 8px ${t.a}`,animation:'pulse-neon 2s ease-in-out infinite'}} />Available for Work
                 </div>
                 <button onClick={()=>go('contact')} data-hover="true" style={{padding:'clamp(6px,1.2vw,8px) clamp(12px,2vw,18px)',borderRadius:2,fontFamily:'JetBrains Mono,monospace',fontSize:'clamp(9px,1.5vw,11px)',background:`${t.a}10`,border:`1px solid ${t.a}28`,color:t.a,cursor:'pointer',letterSpacing:'0.08em',whiteSpace:'nowrap'}}>Hire Me →</button>
               </>
@@ -675,22 +639,29 @@ function Hero() {
           <motion.div initial={{opacity:0,y:-20}} animate={{opacity:1,y:0}} transition={{delay:.3}}
             style={{display:'flex',alignItems:'center',gap:10,padding:'8px 20px',borderRadius:2,marginBottom:48,background:`${t.a}07`,border:`1px solid ${t.a}18`,backdropFilter:'blur(12px)'}}>
             <span style={{width:8,height:8,borderRadius:'50%',background:t.a,boxShadow:`0 0 8px ${t.a}`,animation:'pulse-neon 2s ease-in-out infinite'}} />
-            <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:11,color:`${t.a}85`,letterSpacing:'0.15em'}}>AVAILABLE FOR PROJECTS · {new Date().toLocaleString('default',{month:'long',year:'numeric'}).toUpperCase()}</span>
+            <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:11,color:`${t.a}85`,letterSpacing:'0.15em'}}>AVAILABLE FOR WORK</span>
           </motion.div>
           <motion.div initial={{opacity:0,scale:.8}} animate={{opacity:1,scale:1}} transition={{duration:.8,delay:.4,ease:[0.22,1,0.36,1]}}
             style={{position:'relative',marginBottom:'clamp(24px,6vw,48px)',width:'clamp(200px,60vw,280px)',height:'clamp(200px,60vw,280px)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            {/* Green animated circle - outer */}
             <div style={{position:'absolute',width:'calc(100% - 20px)',height:'calc(100% - 20px)',borderRadius:'50%',top:'50%',left:'50%',border:`1px solid ${t.a}15`,animation:'spin-slow 20s linear infinite',animationDirection:'reverse'}} />
-            <div style={{position:'absolute',width:'calc(100% - 40px)',height:'calc(100% - 40px)',borderRadius:'50%',top:'50%',left:'50%',border:`1px dashed ${t.b}20`,animation:'spin-slow 13s linear infinite'}} />
-            {['React','Next.js','UI/UX','3D','AI'].map((b,i)=>{ const a=(i/5)*Math.PI*2,r=Math.max(60,Math.min(130,window.innerWidth/6)); return (
-              <motion.div key={b} initial={{opacity:0,scale:0}} animate={{opacity:1,scale:1}} transition={{delay:.8+i*.1}}
-                style={{position:'absolute',fontFamily:'JetBrains Mono,monospace',fontSize:'clamp(8px,1.5vw,10px)',padding:'3px 8px',borderRadius:2,whiteSpace:'nowrap',top:`calc(50% + ${Math.sin(a)*r}px)`,left:`calc(50% + ${Math.cos(a)*r}px)`,transform:'translate(-50%,-50%)',background:'rgba(5,5,5,0.92)',border:`1px solid ${i%2===0?t.a:t.b}35`,color:i%2===0?t.a:t.b,backdropFilter:'blur(8px)'}}>
-                {b}
-              </motion.div>
-            )})}
-            <div style={{position:'relative',width:'clamp(120px,50vw,160px)',height:'clamp(120px,50vw,160px)',borderRadius:2,overflow:'hidden',border:`1px solid ${t.a}35`,boxShadow:`0 0 60px ${t.a}18,0 0 120px ${t.b}08`}}>
-              <img src="https://i.ibb.co/5gRLQG7C/Whats-App-Image-2025-01-08-at-10-16-10-0b7c5513.jpg" alt="Steve Ronald" style={{width:'100%',height:'100%',objectFit:'cover'}} />
+            {/* Purple animated circle - inner (profile image inside this) */}
+            <div style={{position:'absolute',width:'calc(100% - 40px)',height:'calc(100% - 40px)',borderRadius:'50%',top:'50%',left:'50%',border:`2px solid ${t.b}40`,animation:'spin-slow 13s linear infinite',overflow:'hidden',boxShadow:`0 0 40px ${t.b}20`}}>
+              <img src="https://i.ibb.co/5gRLQG7C/Whats-App-Image-2025-01-08-at-10-16-10-0b7c5513.jpg" alt="Steve Ronald" style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center'}} />
               <div style={{position:'absolute',inset:0,backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,255,0,0.025) 3px,rgba(0,255,0,0.025) 4px)',pointerEvents:'none'}} />
             </div>
+            {/* Tech icons positioned outside circles */}
+            {['React','Next.js','Node.js','Supabase','TailwindCSS','OpenAI','Firebase','TypeScript','3D','AI'].map((b,i)=>{
+              const total = 10;
+              const a=(i/total)*Math.PI*2;
+              const r=Math.max(100,Math.min(160,window.innerWidth/4));
+              return (
+                <motion.div key={b} initial={{opacity:0,scale:0}} animate={{opacity:1,scale:1}} transition={{delay:.8+i*.08}}
+                  style={{position:'absolute',fontFamily:'JetBrains Mono,monospace',fontSize:'clamp(8px,1.5vw,11px)',padding:'4px 10px',borderRadius:2,whiteSpace:'nowrap',top:`calc(50% + ${Math.sin(a)*r}px)`,left:`calc(50% + ${Math.cos(a)*r}px)`,transform:'translate(-50%,-50%)',background:'rgba(5,5,5,0.95)',border:`1px solid ${i%2===0?t.a:t.b}40`,color:i%2===0?t.a:t.b,backdropFilter:'blur(10px)',boxShadow:`0 4px 15px rgba(0,0,0,0.5)`}}>
+                  {b}
+                </motion.div>
+              )
+            })}
           </motion.div>
           <motion.div initial={{opacity:0,y:30}} animate={{opacity:1,y:0}} transition={{delay:.5}}>
             <h1 style={{fontFamily:'Syne,sans-serif',fontWeight:900,fontSize:'clamp(2rem,8vw,8rem)',lineHeight:.9,letterSpacing:'-0.03em',marginBottom:0}}>
@@ -713,18 +684,18 @@ function Hero() {
             Crafting premium digital experiences — from immersive interfaces to AI-powered platforms. I turn vision into reality at the intersection of design, code, and creativity.
           </motion.p>
           <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:.95}}
-            style={{display:'flex',gap:'clamp(8px,2vw,16px)',flexWrap:'wrap',justifyContent:'center',marginBottom:60,flexDirection:typeof window!=='undefined'&&window.innerWidth<640?'column':'row',alignItems:typeof window!=='undefined'&&window.innerWidth<640?'stretch':'center'}}>
+            style={{display:'flex',gap:'clamp(12px,2vw,20px)',flexWrap:'nowrap',justifyContent:'center',marginBottom:60,alignItems:'center'}}>
             <button onClick={()=>document.getElementById('projects')?.scrollIntoView({behavior:'smooth'})} data-hover="true"
-              style={{padding:'clamp(12px,2vw,16px) clamp(20px,4vw,36px)',borderRadius:2,fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:'clamp(11px,2vw,13px)',letterSpacing:'0.08em',background:t.a,color:'#000',border:'none',cursor:'pointer',boxShadow:`0 0 40px ${t.a}40,0 8px 30px ${t.a}20`,transition:'all .3s'}}>
+              style={{padding:'clamp(14px,2vw,18px) clamp(24px,4vw,40px)',borderRadius:2,fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:'clamp(12px,2vw,14px)',letterSpacing:'0.08em',background:t.a,color:'#000',border:'none',cursor:'pointer',boxShadow:`0 0 40px ${t.a}40,0 8px 30px ${t.a}20`,transition:'all .3s',whiteSpace:'nowrap'}}>
               VIEW MY WORK
             </button>
             <button onClick={()=>document.getElementById('contact')?.scrollIntoView({behavior:'smooth'})} data-hover="true"
-              style={{padding:'clamp(12px,2vw,16px) clamp(20px,4vw,36px)',borderRadius:2,fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:'clamp(11px,2vw,13px)',letterSpacing:'0.08em',background:'transparent',color:t.b,border:`1px solid ${t.b}45`,cursor:'pointer',transition:'all .3s'}}>
+              style={{padding:'clamp(14px,2vw,18px) clamp(24px,4vw,40px)',borderRadius:2,fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:'clamp(12px,2vw,14px)',letterSpacing:'0.08em',background:'transparent',color:t.b,border:`1px solid ${t.b}45`,cursor:'pointer',transition:'all .3s',whiteSpace:'nowrap'}}>
               HIRE ME →
             </button>
             <button onClick={()=>{const u=window.location.origin;navigator.clipboard.writeText(u);toast('Portfolio link copied! Share it 🚀','🔗')}} data-hover="true"
-              style={{padding:'clamp(12px,2vw,16px) clamp(16px,3vw,20px)',borderRadius:2,fontFamily:'JetBrains Mono,monospace',fontSize:'clamp(11px,2vw,13px)',letterSpacing:'0.08em',background:'transparent',color:'rgba(255,255,255,0.3)',border:'1px solid rgba(255,255,255,0.1)',cursor:'pointer',transition:'all .3s'}} title="Share this portfolio">
-              ⬡ Share
+              style={{padding:'clamp(14px,2vw,18px) clamp(20px,3vw,28px)',borderRadius:2,fontFamily:'JetBrains Mono,monospace',fontSize:'clamp(12px,2vw,14px)',letterSpacing:'0.08em',background:'transparent',color:'rgba(255,255,255,0.5)',border:'1px solid rgba(255,255,255,0.15)',cursor:'pointer',transition:'all .3s',whiteSpace:'nowrap'}} title="Share this portfolio">
+              ⬡ SHARE
             </button>
           </motion.div>
           <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1.4}}
@@ -795,13 +766,6 @@ function About() {
             <div style={{display:'flex',gap:10}}>
               <a href="mailto:stevezuluu@gmail.com" data-hover="true" style={{flex:1,textAlign:'center',padding:'13px',borderRadius:2,fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:12,background:t.a,color:'#000',boxShadow:`0 0 30px ${t.a}28`,letterSpacing:'0.07em',textDecoration:'none'}}>HIRE ME</a>
               <button onClick={()=>document.getElementById('projects')?.scrollIntoView({behavior:'smooth'})} data-hover="true" style={{flex:1,padding:'13px',borderRadius:2,fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:12,border:`1px solid ${t.b}40`,color:t.b,background:'transparent',cursor:'pointer',letterSpacing:'0.07em'}}>SEE WORK →</button>
-            </div>
-            <div style={{marginTop:16,padding:'14px 16px',borderRadius:2,background:`${t.a}05`,border:`1px solid ${t.a}12`,display:'flex',alignItems:'center',gap:12}}>
-              <span style={{width:8,height:8,borderRadius:'50%',background:t.a,boxShadow:`0 0 8px ${t.a}`,flexShrink:0,animation:'pulse-neon 1.5s ease-in-out infinite',display:'inline-block'}} />
-              <div>
-                <div style={{fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:12,color:'#fff',marginBottom:2}}>Building: AI Portfolio Generator</div>
-                <div style={{fontFamily:'JetBrains Mono,monospace',fontSize:10,color:`${t.a}60`}}>Next.js · OpenAI · 68% complete</div>
-              </div>
             </div>
           </motion.div>
           <motion.div initial={{opacity:0,x:30}} animate={inView?{opacity:1,x:0}:{}} transition={{delay:.3}}>
@@ -942,13 +906,12 @@ function Projects() {
       url:'https://my-portfolio-six-virid-22.vercel.app/',color:t.a,year:'2025',tags:['React','Vercel','Brand'],stats:[{l:'Load',v:.8,s:'s'},
         {l:'Lighthouse',v:98,s:'/100'},{l:'Deploys',v:40,s:'+'}]},
     {id:2,title:'DripGather',cat:'E-Commerce',desc:'A next-generation AI-driven e-commerce platform with intelligent product recommendations and modern UI/UX. Implemented conversational search, dynamic product filtering, secure authentication, and optimised performance through code-splitting and caching strategies — achieving sub-2s load times and a 35% improvement in simulated conversion flow completion rates.', url:'https://drip-gather.vercel.app/',color:t.b,year:'2026',tags:['React', 'TypeScript', 'Vite', 'Tailwind CSS', 'Radix UI', 'React Query', 'Context API', 'Zod', 'GitHub Actions'],stats:[{l:'Uptime',v:99.9,s:'%'} ,{l:'Viewers',v:250,s:'+'},{l:'Customer',v:30,s:'+'}]},
-    {id:3,title:'Omnincreva-studios',cat:'Website',desc:'Modern high-converting website for Omnicreva, featuring immersive UI, smooth animations, and a premium digital experience.',url:'https://omni-creva.vercel.app/',color:'#A8FF78',year:'2026',tags:['React', 'TypeScript', 'Tailwind CSS', 'Radix UI','Framer'],stats:[{l:'Projects',v:20,s:'+'},{l:'Clients',v:10,s:'+'},{l:'Views',v:1000,s:'K+'}]},
     {
   id: 5,
   title: 'PromptlyOS',
   cat: 'Web Application',
   desc: 'A professional AI-powered career management platform featuring role-based dashboards for developers, freelancers, recruiters, and managers. Delivered real-time project, task, skill, and application tracking with full CRUD functionality. Integrated AI features including learning roadmap generation, code analysis, and smart recommendations — reducing manual career admin time by an estimated 60% for early users.',url: 'https://promptlyos-seven.vercel.app',
-  color: '#4F46E5', // Professional Indigo/Blue to match a dashboard feel
+  color: '#4F46E5',
   year: '2026',
   tags: ['Next.js','Tailwind CSS', 'Vite', 'OpenAI API', 'Supabase', 'GitHub Actions', 'Edge Functions'],
   stats: [
@@ -959,17 +922,17 @@ function Projects() {
 },
     {
   id: 6,
-  title: 'Omnicreva Interface',
-  cat: 'Landing Page',
-  desc: 'Modern high-converting landing page for Omnicreva, featuring immersive UI, smooth animations, and a premium digital experience.',
-  url: 'https://omnicreva-interface.gt.tc/',
-  color: '#00F5A0',
+  title: 'Eva-Tech-Studio',
+  cat: 'Platform',
+  desc: 'A tech solutions platform focused on AI-powered growth tools and business automation.',
+  url: 'https://eva-tech-studio.vercel.app/',
+  color: '#00D9FF',
   year: '2026',
-  tags: ['Next.js', 'Node.js', 'Three.js'],
+  tags: ['Next.js', 'AI', 'Automation', 'Business Tools'],
   stats: [
-    { l: 'Sections', v: 8, s: '+' },
-    { l: 'Animations', v: 12, s: '+' },
-    { l: 'Performance', v: 95, s: '%' }
+    { l: 'Tools', v: 15, s: '+' },
+    { l: 'Users', v: 500, s: '+' },
+    { l: 'Uptime', v: 99, s: '%' }
   ]
 }
   ]
@@ -1056,77 +1019,6 @@ function Projects() {
           </motion.div>
         )}
       </AnimatePresence>
-    </section>
-  )
-}
-
-// ── SERVICES & PRICING ─────────────────────────────────────────────────────────
-function Services() {
-  const ref=useRef<HTMLDivElement>(null)
-  const inView=useInView(ref,{once:true,margin:'-80px'})
-  const { t } = useTheme()
-  const toast = useToast()
-  const [hovered,setHovered]=useState<number|null>(null)
-  const plans=[
-    {name:'Starter',price:'From $500',period:'per project',icon:'⚡',color:'#38BDF8',popular:false,desc:'Perfect for individuals and small businesses launching their digital presence.',features:['Custom Landing Page','Mobile Responsive','SEO Basics','Contact Form','2 Revisions','7-Day Delivery'],cta:'Get Started'},
-    {name:'Pro',price:'From $1,500',period:'per project',icon:'💎',color:t.a,popular:true,desc:'Full-featured web apps and brand identities for growing businesses.',features:['Full Website (5–10 pages)','Custom Animations','CMS Integration','Brand Identity Kit','SEO Optimized','5 Revisions','Deployment Included','14-Day Delivery'],cta:'Most Popular'},
-    {name:'Enterprise',price:'Custom',period:'quote',icon:'🚀',color:t.b,popular:false,desc:'Premium end-to-end solutions for companies that need the full package.',features:['Full-Stack Application','AI Integration','Custom Design System','E-Commerce & Payments','Performance Audit','Unlimited Revisions','Priority Support','Ongoing Maintenance'],cta:'Contact Me'},
-  ]
-  return (
-    <section id="services" style={{position:'relative',padding:'8rem 0',overflow:'hidden',background:t.bg}}>
-      <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:700,height:700,borderRadius:'50%',pointerEvents:'none',background:`radial-gradient(circle,${t.a}03,${t.b}02,transparent 70%)`,filter:'blur(100px)'}} />
-      <div ref={ref} style={{maxWidth:1280,margin:'0 auto',padding:'0 24px'}}>
-        <motion.div initial={{opacity:0,y:30}} animate={inView?{opacity:1,y:0}:{}} style={{marginBottom:60,textAlign:'center'}}>
-          <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:11,color:t.a,letterSpacing:'0.2em',textTransform:'uppercase'}}>// 04 Services</span>
-          <h2 style={{fontFamily:'Syne,sans-serif',fontWeight:900,fontSize:'clamp(2.5rem,5vw,4rem)',color:'#fff',marginTop:12,lineHeight:1.1}}>
-            What I<br /><GlitchText text="Offer." style={{color:t.b,textShadow:`0 0 40px ${t.b}30`}} />
-          </h2>
-          <p style={{fontFamily:'DM Sans,sans-serif',fontSize:16,color:'rgba(255,255,255,0.35)',maxWidth:480,margin:'16px auto 0'}}>Transparent pricing for every budget. All projects include clean code, premium design, and dedicated support.</p>
-        </motion.div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:20,alignItems:'center'}}>
-          {plans.map((plan,i)=>(
-            <motion.div key={plan.name} initial={{opacity:0,y:30}} animate={inView?{opacity:1,y:0}:{}} transition={{delay:i*.1}}
-              onMouseEnter={()=>setHovered(i)} onMouseLeave={()=>setHovered(null)}
-              style={{position:'relative',borderRadius:2,overflow:'hidden',transition:'all .4s',background:t.card,border:`1px solid ${hovered===i||plan.popular?plan.color+'30':'rgba(255,255,255,0.05)'}`,boxShadow:hovered===i||plan.popular?`0 20px 60px ${plan.color}12`:'none',transform:plan.popular?'scale(1.04)':undefined}}>
-              {plan.popular&&<div style={{position:'absolute',top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${plan.color},${t.b})`,boxShadow:`0 0 15px ${plan.color}`}} />}
-              {!plan.popular&&<div style={{height:1,background:`linear-gradient(90deg,transparent,${plan.color}50,transparent)`}} />}
-              {plan.popular&&<div style={{position:'absolute',top:16,right:16,padding:'4px 10px',borderRadius:2,fontFamily:'JetBrains Mono,monospace',fontSize:10,background:plan.color,color:'#000',fontWeight:700}}>POPULAR</div>}
-              <div style={{padding:'32px 28px'}}>
-                <div style={{width:48,height:48,borderRadius:2,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,marginBottom:20,background:`${plan.color}10`,border:`1px solid ${plan.color}20`}}>{plan.icon}</div>
-                <div style={{fontFamily:'Syne,sans-serif',fontWeight:900,fontSize:20,color:'#fff',marginBottom:6}}>{plan.name}</div>
-                <div style={{display:'flex',alignItems:'baseline',gap:6,marginBottom:12}}>
-                  <span style={{fontFamily:'Syne,sans-serif',fontWeight:900,fontSize:28,color:plan.color,textShadow:`0 0 20px ${plan.color}40`}}>{plan.price}</span>
-                  <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:11,color:'rgba(255,255,255,0.3)'}}>{plan.period}</span>
-                </div>
-                <p style={{fontFamily:'DM Sans,sans-serif',fontSize:13,color:'rgba(255,255,255,0.38)',lineHeight:1.6,marginBottom:24,minHeight:48}}>{plan.desc}</p>
-                <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:28}}>
-                  {plan.features.map(f=>(
-                    <div key={f} style={{display:'flex',alignItems:'center',gap:10,fontSize:13,fontFamily:'DM Sans,sans-serif',color:'rgba(255,255,255,0.6)'}}>
-                      <span style={{width:18,height:18,borderRadius:2,display:'flex',alignItems:'center',justifyContent:'center',background:`${plan.color}15`,border:`1px solid ${plan.color}25`,color:plan.color,fontSize:10,flexShrink:0}}>✓</span>
-                      {f}
-                    </div>
-                  ))}
-                </div>
-                <button onClick={()=>{ document.getElementById('contact')?.scrollIntoView({behavior:'smooth'}); toast(`${plan.name} plan selected!`,plan.icon) }} data-hover="true"
-                  style={{width:'100%',padding:'13px',borderRadius:2,fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:13,letterSpacing:'0.06em',cursor:'pointer',transition:'all .3s',background:plan.popular?plan.color:'transparent',color:plan.popular?'#000':plan.color,border:`1px solid ${plan.color}40`,boxShadow:plan.popular?`0 0 30px ${plan.color}30`:undefined}}>
-                  {plan.cta} →
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-        <motion.div initial={{opacity:0,y:20}} animate={inView?{opacity:1,y:0}:{}} transition={{delay:.5}}
-          style={{marginTop:40,padding:'28px 32px',borderRadius:2,background:t.card,border:'1px solid rgba(255,255,255,0.04)',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:20}}>
-          <div>
-            <div style={{fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:18,color:'#fff',marginBottom:6}}>Not sure which plan fits?</div>
-            <p style={{fontFamily:'DM Sans,sans-serif',fontSize:14,color:'rgba(255,255,255,0.38)'}}>Let&apos;s talk. I&apos;ll help you figure out exactly what you need — no pressure, no fluff.</p>
-          </div>
-          <button onClick={()=>document.getElementById('contact')?.scrollIntoView({behavior:'smooth'})} data-hover="true"
-            style={{padding:'13px 28px',borderRadius:2,fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:13,letterSpacing:'0.06em',background:t.a,color:'#000',border:'none',cursor:'pointer',boxShadow:`0 0 30px ${t.a}30`,whiteSpace:'nowrap'}}>
-            GET A FREE QUOTE →
-          </button>
-        </motion.div>
-      </div>
     </section>
   )
 }
@@ -1691,7 +1583,7 @@ function AvailabilityCalendar() {
 // ── DEEP LINKS ─────────────────────────────────────────────────────────────────
 function DeepLinks() {
   useEffect(()=>{
-    const ids=['hero','about','skills','projects','services','testimonials','gallery','contact']
+    const ids=['hero','about','skills','projects','testimonials','gallery','contact']
     const obs = new IntersectionObserver(entries=>{
       entries.forEach(e=>{
         if(e.isIntersecting&&e.intersectionRatio>=0.25){
@@ -1713,12 +1605,11 @@ const VALUE_ITEMS=['Available for Work','Full-Stack Development','Brand Identity
 // ── ROOT ───────────────────────────────────────────────────────────────────────
 export default function Page() {
   const [loaded,setLoaded]=useState(false)
-  const [theme,setTheme]=useState<ThemeKey>('neon')
 
   return (
-    <ThemeCtx.Provider value={{theme,t:THEMES[theme],setTheme}}>
+    <ThemeCtx.Provider value={{t:THEME}}>
       <ToastProvider>
-        <div style={{background:THEMES[theme].bg,color:'#fff',minHeight:'100vh'}}>
+        <div style={{background:THEME.bg,color:'#fff',minHeight:'100vh'}}>
           <PageLoader onDone={()=>setLoaded(true)} />
           {loaded&&(
             <>
@@ -1734,7 +1625,6 @@ export default function Page() {
               <Marquee items={VALUE_ITEMS} />
               <Skills />
               <Projects />
-              <Services />
               <Testimonials />
               <Gallery />
               <Contact />
@@ -1745,6 +1635,7 @@ export default function Page() {
               <KeyboardShortcuts />
               <CurrentlyBuilding />
               <WhatsAppFloat />
+              <FloatingChat />
               <DeepLinks />
             </>
           )}
