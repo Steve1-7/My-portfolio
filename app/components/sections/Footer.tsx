@@ -1,7 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Github, Linkedin, Mail, ArrowUp } from 'lucide-react'
+import { Mail, ArrowUp } from 'lucide-react'
+import { GitHubIcon, LinkedInIcon } from '../ui/SocialIcons'
 
 const footerLinks = [
   { label: 'About', href: '#about' },
@@ -11,8 +12,8 @@ const footerLinks = [
 ]
 
 const socialLinks = [
-  { icon: Github, href: 'https://github.com/Steve1-7', label: 'GitHub' },
-  { icon: Linkedin, href: 'https://www.linkedin.com/in/steve-ronald1710s/', label: 'LinkedIn' },
+  { icon: GitHubIcon, href: 'https://github.com/Steve1-7', label: 'GitHub' },
+  { icon: LinkedInIcon, href: 'https://www.linkedin.com/in/steve-ronald1710s/', label: 'LinkedIn' },
   { icon: Mail, href: 'mailto:stevezuluu@gmail.com', label: 'Email' },
 ]
 

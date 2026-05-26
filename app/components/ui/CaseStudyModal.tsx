@@ -2,8 +2,9 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, ExternalLink, Github, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from './Button'
+import { GitHubIcon } from './SocialIcons'
 
 export interface Project {
   id: string
@@ -243,7 +244,7 @@ export function CaseStudyModal({ project, isOpen, onClose }: CaseStudyModalProps
                     target="_blank"
                     rel="noopener noreferrer"
                     variant="outline"
-                    icon={<Github className="w-4 h-4" />}
+                    icon={<GitHubIcon className="w-4 h-4" />}
                     iconPosition="right"
                   >
                     View Code

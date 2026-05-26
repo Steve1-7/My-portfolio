@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ExternalLink, Github, ArrowRight } from 'lucide-react'
+import { ExternalLink, ArrowRight } from 'lucide-react'
 import { SectionHeader } from '../ui/SectionHeader'
 import { Button } from '../ui/Button'
 import { CaseStudyModal, type Project } from '../ui/CaseStudyModal'
+import { GitHubIcon } from '../ui/SocialIcons'
 
 const projects: Project[] = [
   {
@@ -205,7 +206,7 @@ export function Projects() {
                           className="w-12 h-12 rounded-full glass flex items-center justify-center text-foreground"
                           aria-label="View source code"
                         >
-                          <Github className="w-5 h-5" />
+                        <GitHubIcon className="w-5 h-5" />
                         </motion.a>
                       )}
                     </div>
@@ -264,7 +265,7 @@ export function Projects() {
             variant="outline"
             size="lg"
             onClick={() => window.open('https://github.com/Steve1-7', '_blank')}
-            icon={<Github className="w-4 h-4" />}
+            icon={<GitHubIcon className="w-4 h-4" />}
           >
             View More on GitHub
           </Button>

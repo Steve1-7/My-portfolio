@@ -73,10 +73,10 @@ export function TechStack() {
             transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
             className="flex gap-8 whitespace-nowrap"
           >
-            {[...techCategories, ...techCategories].flatMap((cat) =>
+            {[...techCategories, ...techCategories].flatMap((cat, catIdx) =>
               cat.technologies.map((tech, i) => (
                 <span
-                  key={`${cat.name}-${tech}-${i}`}
+                  key={`marquee-${catIdx}-${cat.name}-${tech}-${i}`}
                   className="inline-flex items-center gap-2 text-muted-foreground/50 font-mono text-sm"
                 >
                   <span className="w-1 h-1 rounded-full bg-primary/50" />

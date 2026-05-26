@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Github, Linkedin, Mail } from 'lucide-react'
+import { Menu, X, Mail } from 'lucide-react'
 import { ThemeToggle } from '../ThemeToggle'
 import { Button } from '../ui/Button'
 import { cn } from '@/lib/utils'
+import { GitHubIcon, LinkedInIcon } from '../ui/SocialIcons'
 
 const navLinks = [
   { label: 'About', href: '#about' },
@@ -16,8 +17,8 @@ const navLinks = [
 ]
 
 const socialLinks = [
-  { icon: Github, href: 'https://github.com/Steve1-7', label: 'GitHub' },
-  { icon: Linkedin, href: 'https://www.linkedin.com/in/steve-ronald1710s/', label: 'LinkedIn' },
+  { icon: GitHubIcon, href: 'https://github.com/Steve1-7', label: 'GitHub' },
+  { icon: LinkedInIcon, href: 'https://www.linkedin.com/in/steve-ronald1710s/', label: 'LinkedIn' },
   { icon: Mail, href: 'mailto:stevezuluu@gmail.com', label: 'Email' },
 ]
 
