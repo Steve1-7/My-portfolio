@@ -2,8 +2,10 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import Analytics from './components/Analytics'
+import { SkipToContent } from '@/components/skip-to-content'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://my-portfolio-six-virid-22.vercel.app'),
   title: 'Steve Ronald | Full-Stack Developer & Brand Designer',
   description: 'Eva-Tech-Studio — Premium digital experiences, brand identity, and full-stack development.',
   keywords: ['Full-Stack Developer', 'React', 'Next.js', 'TypeScript', 'Brand Design', '3D Artist', 'UI/UX', 'Web Development', 'South Africa'],
@@ -86,6 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
+        <SkipToContent />
         <Analytics />
         <ErrorBoundary>{children}</ErrorBoundary>
       </body>
