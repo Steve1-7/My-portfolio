@@ -19,7 +19,7 @@ const stats: StatItem[] = [
   { icon: Users, value: 20, suffix: '+', label: 'Happy Clients', description: 'Across various industries' },
   { icon: Globe, value: 5, suffix: '+', label: 'Years Experience', description: 'Building digital products' },
   { icon: TrendingUp, value: 100, suffix: '%', label: 'Client Satisfaction', description: 'Consistent quality delivery' },
-  { icon: Zap, value: 15, suffix: '+', label: 'Technologies', label: 'Tech Stack Mastered', description: 'Modern development tools' },
+  { icon: Zap, value: 15, suffix: '+', label: 'Tech Stack Mastered', description: 'Modern development tools' },
   { icon: Award, value: 3, suffix: '', label: 'Businesses Founded', description: 'Entrepreneurial ventures' },
 ]
 
