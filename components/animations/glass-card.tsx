@@ -1,16 +1,14 @@
 'use client'
 
 import React from 'react'
-import { motion } from 'framer-motion'
+import { motion, type HTMLMotionProps } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
-interface GlassCardProps {
-  children: React.ReactNode
-  className?: string
+interface GlassCardProps extends HTMLMotionProps<'div'> {
   hover?: boolean
 }
 
-export function GlassCard({ children, className = '', hover = true }: GlassCardProps) {
+export function GlassCard({ children, className = '', hover = true, ...props }: GlassCardProps) {
   return (
     <motion.div
       className={cn(
@@ -20,6 +18,7 @@ export function GlassCard({ children, className = '', hover = true }: GlassCardP
       )}
       whileHover={hover ? { scale: 1.02, y: -4 } : {}}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      {...props}
     >
       {children}
     </motion.div>
